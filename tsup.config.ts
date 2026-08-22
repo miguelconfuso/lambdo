@@ -12,13 +12,6 @@ export default defineConfig({
     "process.env.DEV": '"false"',
     "process.env.NODE_ENV": '"production"',
   },
-  esbuildPlugins: [{
-    name: "ignore-optional-react-devtools",
-    setup(build) {
-      build.onResolve({ filter: /^react-devtools-core$/ }, () => ({ path: "react-devtools-core", namespace: "devtools-stub" }));
-      build.onLoad({ filter: /.*/, namespace: "devtools-stub" }, () => ({ contents: "export default {initialize(){},connectToDevTools(){}}" }));
-    },
-  }],
   splitting: false,
   clean: true,
   sourcemap: true,

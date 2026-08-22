@@ -1,8 +1,7 @@
-import { render } from "ink";
 import packageJson from "../package.json" with { type: "json" };
-import { App, LAMBDO_ASCII, type LabMode } from "./app.js";
 import { deriveWave, displacementAt, superpositionAt, type WaveParameters } from "./physics/wave.js";
 import { renderTrace, traceToText } from "./rendering/wave.js";
+import { LAMBDO_ASCII, runTerminal, type LabMode } from "./terminal.js";
 
 const args = process.argv.slice(2);
 const VERSION = packageJson.version;
@@ -62,17 +61,13 @@ try {
     process.exit(0);
   }
 
-  const app = render(<App initialMode={mode} initialAmplitude={amplitude} initialWavelength={wavelength} initialFrequency={frequency}/>, {
-    alternateScreen: true,
-    incrementalRendering: true,
-    maxFps: 10,
+  await runTerminal({
+    initialMode: mode,
+    initialAmplitude: amplitude,
+    initialWavelength: wavelength,
+    initialFrequency: frequency,
   });
-  process.stdout.write("\x1b[?25l");
-  try {
-    await app.waitUntilExit();
-  } finally {
-    process.stdout.write("\x1b[?25h");
-  }
+  process.exit(0);
 } catch (error) {
   console.error(`lambdo: ${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);

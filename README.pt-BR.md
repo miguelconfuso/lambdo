@@ -14,6 +14,7 @@ Lambdo é um laboratório interativo de ondas que funciona inteiramente no termi
 - Classificação de interferência construtiva, destrutiva ou parcial.
 - Inspetor de velocidade, número de onda e frequência angular.
 - Modo estático `--snapshot` para scripts e terminais não interativos.
+- Renderização ANSI direta, atualizando somente as regiões alteradas da tela.
 - Motores de física e renderização separados da interface.
 - Testes automatizados das propriedades matemáticas.
 

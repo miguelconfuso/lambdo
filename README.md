@@ -85,12 +85,12 @@ lambdo --snapshot --mode interference
 ```text
 src/physics      analytical wave model and superposition
 src/rendering    terminal-independent glyph renderer
-src/app.tsx      interactive Ink interface
+src/terminal.ts  direct ANSI interface, diff renderer and input loop
 src/cli.tsx      command-line entry point and snapshot mode
 test             mathematical and rendering invariants
 ```
 
-The physics engine has no dependency on React or Ink. The interface consumes calculated state rather than owning the equations.
+The physics engine and interface have no UI-framework dependency. The terminal runtime only writes changed regions and respects output backpressure, while the interface consumes calculated state rather than owning the equations.
 
 ## Roadmap
 
