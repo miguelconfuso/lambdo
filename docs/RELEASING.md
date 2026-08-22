@@ -1,10 +1,8 @@
-# Release process
+# Publicando uma versão
 
-## Prepare
+O número da tag precisa ser igual ao campo `version` do `package.json`.
 
-1. Confirm that `CHANGELOG.md` describes the release.
-2. Confirm that `package.json` contains the intended version.
-3. Run the locked verification:
+Antes de publicar:
 
 ```bash
 npm ci
@@ -12,24 +10,15 @@ npm run check
 npm pack --dry-run
 ```
 
-4. Test the packed command in a temporary directory if the CLI packaging changed.
-
-## Tag and publish on GitHub
+Depois de atualizar o changelog e enviar o commit para `main`, crie a tag:
 
 ```bash
 git tag -a v0.1.0 -m "Lambdo v0.1.0"
-git push origin main
 git push origin v0.1.0
 ```
 
-Create a GitHub Release from the tag using the matching changelog section.
+O workflow `release.yml` confere a versão, executa os testes, gera o arquivo `.tgz` e cria a GitHub Release automaticamente.
 
-## npm
+Quando a Release é publicada, `github-packages.yml` executa uma nova verificação e publica o mesmo código como `@miguelconfuso/lambdo` no GitHub Packages. A autenticação usa o `GITHUB_TOKEN` do repositório, sem token salvo no código.
 
-Publish only after the GitHub release and package dry run are both verified:
-
-```bash
-npm publish
-```
-
-Publishing requires an npm account with two-factor authentication configured. Never commit registry tokens or recovery codes.
+Os dois workflows também podem ser acompanhados pela aba Actions.
