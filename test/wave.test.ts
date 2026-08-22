@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   TAU,
   classifyInterference,
+  compareEqualWaveInterference,
   deriveWave,
   displacementAt,
   frequencyFromCycles,
@@ -62,6 +63,23 @@ test("equal waves separated by pi cancel completely", () => {
 test("a quarter-cycle phase difference produces partial interference", () => {
   assert.equal(classifyInterference(1, 1, Math.PI / 2), "partial");
   closeTo(resultantAmplitude(1, 1, Math.PI / 2), Math.sqrt(2));
+});
+
+test("canonical interference comparison is deterministic", () => {
+  const [inPhase, quarterCycle, opposite] = compareEqualWaveInterference(2);
+  assert.equal(inPhase?.resultantAmplitude, 4);
+  assert.equal(inPhase?.maximumRatio, 1);
+  assert.equal(inPhase?.kind, "constructive");
+  closeTo(quarterCycle?.resultantAmplitude ?? 0, 2 * Math.sqrt(2));
+  closeTo(quarterCycle?.maximumRatio ?? 0, Math.SQRT1_2);
+  assert.equal(quarterCycle?.kind, "partial");
+  closeTo(opposite?.resultantAmplitude ?? 1, 0);
+  assert.equal(opposite?.maximumRatio, 0);
+  assert.equal(opposite?.kind, "destructive");
+});
+
+test("interference comparison rejects invalid amplitudes", () => {
+  assert.throws(() => compareEqualWaveInterference(0), /greater than zero/);
 });
 
 test("phase difference is wrapped to the shortest angular distance", () => {

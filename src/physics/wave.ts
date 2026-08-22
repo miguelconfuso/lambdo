@@ -19,6 +19,14 @@ export interface WaveDerived {
 
 export type InterferenceKind = "constructive" | "destructive" | "partial";
 
+export interface InterferenceComparison {
+  label: "In phase" | "Quarter cycle" | "Opposite phase";
+  phaseDifference: number;
+  resultantAmplitude: number;
+  maximumRatio: number;
+  kind: InterferenceKind;
+}
+
 export const DEFAULT_WAVE: WaveParameters = {
   amplitude: 1,
   wavelength: 8,
@@ -104,6 +112,27 @@ export function classifyInterference(amplitudeA: number, amplitudeB: number, pha
   if (ratio >= 0.95) return "constructive";
   if (ratio <= 0.05) return "destructive";
   return "partial";
+}
+
+export function compareEqualWaveInterference(amplitude = 1): InterferenceComparison[] {
+  finite(amplitude, "amplitude");
+  if (amplitude <= 0) throw new RangeError("amplitude must be greater than zero");
+  const maximumAmplitude = amplitude * 2;
+  const cases: ReadonlyArray<readonly [InterferenceComparison["label"], number]> = [
+    ["In phase", 0],
+    ["Quarter cycle", Math.PI / 2],
+    ["Opposite phase", Math.PI],
+  ];
+  return cases.map(([label, phaseDifference]) => {
+    const result = resultantAmplitude(amplitude, amplitude, phaseDifference);
+    return {
+      label,
+      phaseDifference,
+      resultantAmplitude: result,
+      maximumRatio: result / maximumAmplitude,
+      kind: classifyInterference(amplitude, amplitude, phaseDifference),
+    };
+  });
 }
 
 export function equationFor(wave: WaveParameters): string {

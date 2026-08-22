@@ -1,12 +1,12 @@
 {
   "name": "lambdo-tui",
   "version": "0.1.0",
-  "description": "An interactive wave laboratory for the terminal.",
+  "description": "An interactive wave-physics laboratory for visualizing travelling waves, phase and interference in the terminal.",
   "type": "module",
   "bin": {
     "lambdo": "dist/cli.js"
   },
-  "files": ["dist/cli.js", "README.md", "README.pt-BR.md", "LICENSE"],
+  "files": ["dist/cli.js", "docs/assets", "README.md", "README.pt-BR.md", "CHANGELOG.md", "LICENSE"],
   "engines": {
     "node": ">=22"
   },
@@ -15,6 +15,7 @@
     "build": "tsup",
     "start": "node dist/cli.js",
     "snapshot": "node dist/cli.js --snapshot",
+    "compare": "node dist/cli.js --compare",
     "test": "tsx --test test/wave.test.ts test/rendering.test.ts",
     "typecheck": "tsc --noEmit",
     "check": "npm test && npm run typecheck && npm run build"
@@ -30,13 +31,15 @@
   "author": "Miguel (@miguelconfuso)",
   "keywords": [
     "physics",
+    "wave-simulation",
     "waves",
     "wavelength",
     "interference",
     "simulation",
     "terminal",
     "tui",
-    "education"
+    "education",
+    "typescript"
   ],
   "license": "MIT",
   "dependencies": {},

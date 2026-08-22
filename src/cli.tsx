@@ -1,5 +1,5 @@
 import packageJson from "../package.json" with { type: "json" };
-import { deriveWave, displacementAt, superpositionAt, type WaveParameters } from "./physics/wave.js";
+import { compareEqualWaveInterference, deriveWave, displacementAt, superpositionAt, type WaveParameters } from "./physics/wave.js";
 import { renderTrace, traceToText } from "./rendering/wave.js";
 import { LAMBDO_ASCII, runTerminal, type LabMode } from "./terminal.js";
 
@@ -16,6 +16,7 @@ ${LAMBDO_ASCII}
     $ lambdo
     $ lambdo --mode interference
     $ lambdo --snapshot --wavelength 8 --frequency 2
+    $ lambdo --compare
 
   Options
     --mode <travelling|interference>  initial laboratory mode
@@ -23,6 +24,8 @@ ${LAMBDO_ASCII}
     --wavelength <number>             wavelength in metres (default: 8)
     --frequency <number>              frequency in hertz (default: 1)
     --snapshot                        print one frame without opening the TUI
+    --compare                         compare three canonical interference cases
+    --json                            emit comparison data as JSON
     -h, --help                        show help
     -v, --version                     show version
 
@@ -56,6 +59,11 @@ try {
   const wavelength = numberOption("--wavelength", 8);
   const frequency = numberOption("--frequency", 1);
 
+  if (args.includes("--compare")) {
+    printComparison(amplitude, args.includes("--json"));
+    process.exit(0);
+  }
+
   if (args.includes("--snapshot") || !process.stdout.isTTY) {
     printSnapshot(mode, amplitude, wavelength, frequency);
     process.exit(0);
@@ -71,6 +79,24 @@ try {
 } catch (error) {
   console.error(`lambdo: ${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
+}
+
+function printComparison(amplitude: number, json: boolean): void {
+  const cases = compareEqualWaveInterference(amplitude);
+  if (json) {
+    console.log(JSON.stringify({ amplitudeA: amplitude, amplitudeB: amplitude, cases }, null, 2));
+    return;
+  }
+
+  console.log(`\nINTERFERENCE COMPARISON · A₁ = A₂ = ${amplitude.toFixed(2)}\n`);
+  console.log("CASE             Δφ (rad)   RESULT A   MAXIMUM   CLASSIFICATION");
+  console.log("──────────────── ────────── ────────── ───────── ──────────────");
+  for (const item of cases) {
+    console.log(
+      `${item.label.padEnd(16)} ${item.phaseDifference.toFixed(2).padStart(10)} ${item.resultantAmplitude.toFixed(2).padStart(10)} ${`${Math.round(item.maximumRatio * 100)}%`.padStart(9)} ${item.kind.toUpperCase().padStart(14)}`,
+    );
+  }
+  console.log("\nFor equal waves: Aresult = 2A · |cos(Δφ / 2)|\n");
 }
 
 function printSnapshot(mode: LabMode, amplitude: number, wavelength: number, frequency: number): void {
