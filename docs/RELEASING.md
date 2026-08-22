@@ -19,6 +19,6 @@ git push origin v0.1.0
 
 O workflow `release.yml` confere a versão, executa os testes, gera o arquivo `.tgz` e cria a GitHub Release automaticamente.
 
-Quando a Release é publicada, `github-packages.yml` executa uma nova verificação e publica o mesmo código como `@miguelconfuso/lambdo` no GitHub Packages. A autenticação usa o `GITHUB_TOKEN` do repositório, sem token salvo no código.
+A mesma tag inicia `github-packages.yml`, que executa uma nova verificação e publica o código como `@miguelconfuso/lambdo` no GitHub Packages. A autenticação usa o `GITHUB_TOKEN` do repositório, sem token salvo no código.
 
 Os dois workflows também podem ser acompanhados pela aba Actions.
