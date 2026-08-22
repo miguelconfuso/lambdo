@@ -1,46 +1,43 @@
 <div align="center">
   <img src="./docs/assets/lambdo.png" width="280" alt="Lambdo" />
-  <p><strong>Veja a onda. Entenda a matemática.</strong></p>
-  <p>Mude a equação. Veja a física responder.</p>
-  <p>
-    <a href="https://github.com/miguelconfuso/lambdo/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/miguelconfuso/lambdo/ci.yml?branch=main&style=flat-square&label=build" /></a>
-    <img alt="Node.js 22+" src="https://img.shields.io/badge/Node.js-22%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white" />
-    <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-7-3178C6?style=flat-square&logo=typescript&logoColor=white" />
-    <img alt="Versão 0.1.0" src="https://img.shields.io/badge/version-0.1.0-f05c58?style=flat-square" />
-    <a href="./LICENSE"><img alt="MIT" src="https://img.shields.io/github/license/miguelconfuso/lambdo?style=flat-square" /></a>
-  </p>
-  <p><a href="./README.md">English</a> · <strong>Português</strong></p>
+  <p><strong>Um simulador de ondas que cabe no terminal.</strong></p>
+  <p><a href="./README.md">Read in English</a></p>
 </div>
 
 <p align="center">
-  <img src="./docs/assets/lambdo-interference.svg" width="940" alt="Lambdo visualizando interferência parcial no terminal" />
+  <img src="./docs/assets/lambdo-interference.svg" width="940" alt="Interferência entre duas ondas no Lambdo" />
 </p>
 
----
+O Lambdo nasceu de uma anotação da minha apostila de física. Eu tinha escrito `v = λf` ao lado de alguns desenhos de onda e fiquei pensando em como seria mudar cada valor e ver o desenho responder na hora.
 
-Lambdo é um laboratório interativo de física de ondas que funciona inteiramente no terminal. Ele visualiza ondas viajantes, fase e interferência diretamente a partir dos parâmetros físicos — sem animações prontas e sem framework de interface em tempo de execução.
+Tenho 16 anos e fiz o projeto para juntar duas coisas que estou aprendendo: física e programação. Ele ainda é um laboratório pequeno, mas todas as ondas são calculadas de verdade. A interface não reproduz um GIF pronto.
 
-## A diferença aparece na tela e nos números
+## O que acontece quando um valor muda
 
-Para duas ondas iguais de amplitude `1`, alterar somente a diferença de fase leva o resultado do reforço total ao cancelamento completo.
+A amplitude `A` controla a altura da onda. O comprimento `λ` controla o espaço de um ciclo. A frequência `f` informa quantos ciclos acontecem por segundo. A fase `φ` desloca a oscilação.
 
-| Caso | Diferença de fase | Amplitude resultante | Máximo | Classificação |
-|---|---:|---:|---:|---|
-| Em fase | `0,00 rad` | `2,00` | `100%` | Construtiva |
-| Quarto de ciclo | `1,57 rad` | `1,41` | `71%` | Parcial |
-| Fases opostas | `3,14 rad` | `0,00` | `0%` | Destrutiva |
+Esses valores entram na expressão:
 
-Os valores vêm do mesmo motor de física usado pela interface. Reproduza a comparação com:
-
-```bash
-npm run compare
+```text
+y(x,t) = A sen(kx - ωt + φ)
 ```
 
-Para amplitudes iguais, o resultado analítico é `Aresult = 2A · |cos(Δφ / 2)|`.
+O programa também calcula:
 
-## Início rápido
+```text
+v = λf
+k = 2π/λ
+ω = 2πf
+T = 1/f
+```
 
-É necessário ter Node.js 22 ou superior e um terminal com pelo menos 80 × 24 caracteres.
+No modo de interferência, duas ondas são somadas ponto por ponto. Se elas estão em fase, duas amplitudes iguais a 1 produzem amplitude resultante 2. Se a diferença de fase é `π`, uma cancela a outra e o resultado chega a 0. Com diferença `π/2`, o resultado fica perto de 1,41.
+
+Esse é um detalhe de que gosto no projeto: a classificação visual e o número vêm da mesma função de física.
+
+## Como executar
+
+É necessário ter Node.js 22 ou mais recente.
 
 ```bash
 git clone https://github.com/miguelconfuso/lambdo.git
@@ -50,132 +47,56 @@ npm run build
 npm start
 ```
 
-Para instalar o comando globalmente a partir do projeto clonado:
+Se quiser abrir usando apenas o nome `lambdo`:
 
 ```bash
 npm install -g .
 lambdo
 ```
 
-## Por que Lambdo?
+O terminal ideal tem pelo menos 80 colunas e 24 linhas.
 
-Lambdo nasceu enquanto eu estudava ondas e interferência em física. Eu queria que alterar `λ`, `f`, `A` ou `φ` mostrasse imediatamente o efeito real daquele valor sobre uma onda.
+## Formas de usar
 
-O objetivo é simples: **ver a equação se comportar**.
+No modo `TRAVELLING`, a tela mostra uma onda se deslocando e os valores derivados da equação. No modo `INTERFERENCE`, ela mostra a Onda A, a Onda B e a soma das duas.
 
-## O laboratório
+As setas para cima e para baixo escolhem o parâmetro. As setas laterais alteram o valor. `Space` pausa o tempo, `M` troca o modo, `P` alterna rapidamente a fase da Onda B e `H` abre uma explicação do estado atual.
 
-- Onda viajante unidimensional animada.
-- Controles de amplitude, comprimento de onda, frequência, fase e escala temporal.
-- Visualização da Onda A, Onda B e da superposição resultante.
-- Classificação construtiva, destrutiva, parcial e cancelada.
-- Trilhos de fase, barra de intensidade e equações vivas.
-- Modo Learn contextual explicando o estado físico atual.
-- Modos determinísticos de snapshot e comparação para scripts e CI.
-- Renderização ANSI direta, atualizando apenas regiões alteradas e respeitando a fila de saída.
-- Nenhuma dependência de runtime; CLI compilado com aproximadamente 19 KB.
-
-## Modelo físico
-
-| Grandeza | Relação | Significado |
-|---|---|---|
-| Deslocamento | `y(x,t) = A sin(kx − ωt + φ)` | Posição da onda no espaço e tempo |
-| Velocidade | `v = λf` | Distância percorrida por segundo |
-| Número de onda | `k = 2π/λ` | Frequência angular espacial |
-| Frequência angular | `ω = 2πf` | Frequência angular temporal |
-| Período | `T = 1/f` | Tempo de um ciclo completo |
-| Superposição | `ytotal = y₁ + y₂` | Soma dos deslocamentos simultâneos |
-
-Cada ponto exibido é recalculado usando os parâmetros atuais.
-
-## CLI
+Também existem comandos que não abrem a animação:
 
 ```bash
-# Abrir o laboratório interativo
-npm start
-
-# Comparação reproduzível de interferência
 npm run compare
-
-# Comparação legível por máquinas
 node dist/cli.js --compare --json
-
-# Quadros determinísticos sem abrir a interface
 node dist/cli.js --snapshot --wavelength 8 --frequency 2
 node dist/cli.js --snapshot --mode interference
 ```
 
-Use `node dist/cli.js --help` para ver todas as opções.
+O modo `compare` é útil para conferir os casos de reforço, interferência parcial e cancelamento. O modo `snapshot` gera um quadro fixo e ajuda a testar o desenho.
 
-<details>
-<summary><strong>Mapa do teclado</strong></summary>
+## Por que o renderizador é próprio
 
-| Tecla | Ação |
-|---|---|
-| `↑` / `↓` | Selecionar parâmetro |
-| `←` / `→` | Alterar valor |
-| `Espaço` | Pausar ou continuar |
-| `M` ou `Tab` | Trocar modo |
-| `1` / `2` | Onda viajante / interferência |
-| `P` | Alternar a Onda B entre fase igual e oposta |
-| `H` | Abrir o modo Learn contextual |
-| `R` | Restaurar o laboratório |
-| `Q` | Sair |
+A primeira interface ficou muito pesada e chegou a consumir memória demais. O problema não era a equação. O terminal recebia mais atualizações do que conseguia desenhar.
 
-</details>
+Eu retirei o framework da execução final e fiz um renderizador ANSI direto. Hoje ele compara o quadro novo com o anterior, escreve somente as regiões alteradas, limita a taxa de atualização e respeita a pausa do fluxo de saída. O projeto terminou sem dependências de execução.
 
-## Arquitetura
+Separei o código em três partes principais:
 
-```text
-             ┌──────────────────┐
-             │ Motor de física  │
-             │     wave.ts      │
-             └────────┬─────────┘
-                      │
-                      ▼
-             ┌──────────────────┐
-             │ Dados simulados  │
-             └────────┬─────────┘
-                      │
-          ┌───────────┴───────────┐
-          ▼                       ▼
-┌──────────────────┐    ┌──────────────────┐
-│ Renderer Unicode │    │ Snapshot/compare │
-└─────────┬────────┘    └──────────────────┘
-          ▼
-┌──────────────────┐
-│ Terminal ANSI    │
-│ diff + backpress │
-└──────────────────┘
-```
+* `src/physics/wave.ts` faz os cálculos e valida os parâmetros;
+* `src/rendering/wave.ts` transforma amostras numéricas em uma linha Unicode contínua;
+* `src/terminal.ts` cuida da tela, do teclado e das atualizações.
 
-A física é independente da apresentação. As mesmas funções analíticas alimentam animação, snapshots, comparações e testes.
+Essa divisão não foi criada só para deixar as pastas bonitas. Ela permite testar a física e o desenho sem precisar simular uma pessoa apertando teclas.
 
-## Verificações de engenharia
+## O que este projeto representa para mim
+
+O Lambdo foi o primeiro projeto em que um erro de desempenho me obrigou a mudar a estrutura, não apenas ajustar um número. Também foi uma forma de perceber que entender uma fórmula fica mais fácil quando eu consigo experimentar casos extremos e conferir o resultado.
+
+Ainda quero estudar reflexão, ondas estacionárias, nós e ventres. Antes disso, o estado atual pode ser verificado com:
 
 ```bash
-npm ci
-npm run check
+npm test
+npm run typecheck
+npm run build
 ```
 
-O comando executa testes matemáticos e de renderização, verifica o TypeScript e produz o bundle final. A CI repete a instalação travada e a mesma verificação em cada push e pull request.
-
-## Documentos do projeto
-
-- [Roteiro de apresentação](docs/PRESENTATION.md)
-- [Processo de release](docs/RELEASING.md)
-- [Histórico de versões](CHANGELOG.md)
-- [Como contribuir](CONTRIBUTING.md)
-- [Política de segurança](SECURITY.md)
-
-## Próximas etapas
-
-- Reflexão em extremidades fixas e livres.
-- Ondas estacionárias, nós e ventres.
-- Solver numérico 1D por diferenças finitas.
-- Inspeção de estabilidade, energia e convergência.
-- Simulação bidimensional.
-
-## Licença
-
-[MIT](LICENSE) — use, estude e adapte.
+O projeto usa a licença [MIT](LICENSE).

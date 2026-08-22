@@ -1,46 +1,64 @@
 <div align="center">
   <img src="./docs/assets/lambdo.png" width="280" alt="Lambdo" />
-  <p><strong>See the wave. Understand the math.</strong></p>
-  <p>Change the equation. Watch the physics respond.</p>
-  <p>
-    <a href="https://github.com/miguelconfuso/lambdo/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/miguelconfuso/lambdo/ci.yml?branch=main&style=flat-square&label=build" /></a>
-    <img alt="Node.js 22+" src="https://img.shields.io/badge/Node.js-22%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white" />
-    <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-7-3178C6?style=flat-square&logo=typescript&logoColor=white" />
-    <img alt="Version 0.1.0" src="https://img.shields.io/badge/version-0.1.0-f05c58?style=flat-square" />
-    <a href="./LICENSE"><img alt="MIT" src="https://img.shields.io/github/license/miguelconfuso/lambdo?style=flat-square" /></a>
-  </p>
-  <p><strong>English</strong> · <a href="./README.pt-BR.md">Português</a></p>
+  <p><strong>Change the equation and watch the wave respond.</strong></p>
+  <p><a href="./README.pt-BR.md">Leia em português</a></p>
 </div>
 
 <p align="center">
-  <img src="./docs/assets/lambdo-interference.svg" width="940" alt="Lambdo visualizing partial interference in the terminal" />
+  <img src="./docs/assets/lambdo-interference.svg" width="940" alt="Two waves and their interference result inside Lambdo" />
 </p>
 
----
+Lambdo began with a page from my physics notebook. I was studying wavelength, frequency and interference, and I wanted to see the symbols move instead of memorising an equation without an image.
 
-Lambdo is an interactive wave-physics laboratory that runs entirely in the terminal. It visualizes travelling waves, phase and interference directly from their physical parameters—no canned animations and no UI-framework runtime.
+I am a 16-year-old student, and this project is my attempt to connect the physics I learn in class with the programming I study on my own. Lambdo runs in the terminal and calculates every displayed point from the current wave parameters.
 
-## The difference is visible and measurable
+## From the equation to the screen
 
-For two equal waves with amplitude `1`, changing only the phase difference moves the result from full reinforcement to complete cancellation.
+For a travelling wave, Lambdo uses:
 
-| Case | Phase difference | Result amplitude | Maximum | Classification |
-|---|---:|---:|---:|---|
-| In phase | `0.00 rad` | `2.00` | `100%` | Constructive |
-| Quarter cycle | `1.57 rad` | `1.41` | `71%` | Partial |
-| Opposite phase | `3.14 rad` | `0.00` | `0%` | Destructive |
+```text
+y(x,t) = A sin(kx - ωt + φ)
+```
 
-These values come from the same physics engine used by the live interface. Reproduce them with:
+The values shown by the interface come from these relations:
+
+| Quantity | Relation | What changes on screen |
+|---|---|---|
+| Amplitude | `A` | Height of the wave |
+| Speed | `v = λf` | Distance travelled per second |
+| Wave number | `k = 2π/λ` | Spatial repetition |
+| Angular frequency | `ω = 2πf` | Oscillation rate |
+| Period | `T = 1/f` | Time for one cycle |
+| Superposition | `y = y₁ + y₂` | Result of two simultaneous waves |
+
+Changing `λ`, `f`, `A` or `φ` updates the trace and the derived values. There is no prerecorded animation.
+
+## Interference as a measurable result
+
+Two waves with amplitude 1 produce different resultant amplitudes when only their phase difference changes:
+
+| Situation | Phase difference | Resultant amplitude | Percentage of maximum |
+|---|---:|---:|---:|
+| In phase | `0.00 rad` | `2.00` | `100%` |
+| Quarter cycle | `1.57 rad` | `1.41` | `71%` |
+| Opposite phase | `3.14 rad` | `0.00` | `0%` |
+
+For equal amplitudes, the analytical result is:
+
+```text
+Aresult = 2A |cos(Δφ / 2)|
+```
+
+The program classifies the result as constructive, partial or destructive and also displays the phase difference, an intensity bar and the current equations.
 
 ```bash
 npm run compare
+node dist/cli.js --compare --json
 ```
 
-For equal amplitudes, the analytical result is `Aresult = 2A · |cos(Δφ / 2)|`.
+## Open the laboratory
 
-## Quick start
-
-Lambdo requires Node.js 22 or newer and a terminal measuring at least 80 × 24 characters.
+Lambdo needs Node.js 22 or newer and works best in a terminal with at least 80 columns and 24 rows.
 
 ```bash
 git clone https://github.com/miguelconfuso/lambdo.git
@@ -50,132 +68,54 @@ npm run build
 npm start
 ```
 
-Install the command globally from the cloned project:
+To make `lambdo` available as a command on the same computer:
 
 ```bash
 npm install -g .
 lambdo
 ```
 
-## Why Lambdo?
-
-Lambdo started while I was studying waves and interference in physics. I wanted changing `λ`, `f`, `A` or `φ` to immediately show what that value actually does to a wave.
-
-The goal is simple: **see the equation behave**.
-
-## What is inside
-
-- Animated one-dimensional travelling waves.
-- Live amplitude, wavelength, frequency, phase and time-scale controls.
-- Wave A, Wave B and resultant superposition views.
-- Constructive, destructive, partial and cancelled classifications.
-- Phase-difference rails, result-intensity bar and live equations.
-- Contextual Learn mode explaining the current physical state.
-- Deterministic snapshot and comparison modes for scripts and CI.
-- Direct ANSI rendering with changed-region updates and output backpressure.
-- No runtime dependencies; the compiled CLI is approximately 19 KB.
-
-## Physical model
-
-| Quantity | Relation | Meaning |
-|---|---|---|
-| Displacement | `y(x,t) = A sin(kx − ωt + φ)` | Wave position at space and time |
-| Speed | `v = λf` | Distance travelled per second |
-| Wave number | `k = 2π/λ` | Spatial angular frequency |
-| Angular frequency | `ω = 2πf` | Temporal angular frequency |
-| Period | `T = 1/f` | Time for one complete cycle |
-| Superposition | `ytotal = y₁ + y₂` | Sum of simultaneous displacements |
-
-Every displayed point is recalculated from the current parameters.
-
-## CLI
+You can also print a deterministic frame without opening the interactive interface:
 
 ```bash
-# Open the interactive laboratory
-npm start
-
-# Reproducible interference comparison
-npm run compare
-
-# Machine-readable comparison
-node dist/cli.js --compare --json
-
-# Deterministic frames without opening the interface
 node dist/cli.js --snapshot --wavelength 8 --frequency 2
 node dist/cli.js --snapshot --mode interference
 ```
 
-Run `node dist/cli.js --help` for every option.
-
-<details>
-<summary><strong>Keyboard map</strong></summary>
+## Controls
 
 | Key | Action |
 |---|---|
-| `↑` / `↓` | Select a parameter |
-| `←` / `→` | Change the selected value |
-| `Space` | Pause or resume time |
-| `M` or `Tab` | Switch mode |
-| `1` / `2` | Travelling wave / interference |
-| `P` | Toggle Wave B between in-phase and opposite-phase |
-| `H` | Open contextual Learn mode |
-| `R` | Reset the laboratory |
+| `Up`, `Down` | Select a parameter |
+| `Left`, `Right` | Change its value |
+| `Space` | Pause or continue time |
+| `M` or `Tab` | Switch between travelling wave and interference |
+| `1`, `2` | Open a mode directly |
+| `P` | Put Wave B in phase or opposite phase |
+| `H` | Explain the current state and show formulas |
+| `R` | Restore the initial values |
 | `Q` | Quit |
 
-</details>
+## Implementation choices
 
-## Architecture
+The project has no runtime package dependencies. `src/physics/wave.ts` validates the parameters and contains the analytical calculations. `src/rendering/wave.ts` converts sampled points into a Unicode trace. `src/terminal.ts` controls input, layout and ANSI output.
 
-```text
-             ┌──────────────────┐
-             │  Physics engine  │
-             │     wave.ts      │
-             └────────┬─────────┘
-                      │
-                      ▼
-             ┌──────────────────┐
-             │ Simulation data  │
-             └────────┬─────────┘
-                      │
-          ┌───────────┴───────────┐
-          ▼                       ▼
-┌──────────────────┐    ┌──────────────────┐
-│ Unicode renderer │    │ Snapshot/compare │
-└─────────┬────────┘    └──────────────────┘
-          ▼
-┌──────────────────┐
-│ ANSI terminal UI │
-│ diff + backpress │
-└──────────────────┘
-```
+The first version became slow because it created too much terminal output. I replaced the interface framework with a direct renderer, limited the animation rate and started updating only the rows that changed. The renderer also waits when the output stream applies backpressure, so frames do not accumulate in memory.
 
-Physics is independent from presentation. The same analytical functions power the animation, snapshots, comparisons and tests.
+The physics and rendering modules are independent from the live terminal. This lets tests verify the equations, phase wrapping, superposition and trace continuity without depending on animation timing.
 
-## Engineering checks
+## What I learned
+
+Lambdo taught me that a simulation needs two kinds of correctness. The calculation must follow the mathematical model, and the drawing must communicate that result without creating a false impression. Low frequencies, small amplitudes and complete cancellation were important cases because they forced me to improve the scale and visibility of the line.
+
+I also learned to investigate performance instead of only adding more memory. The useful fix was reducing how much work each frame produced.
+
+Run the checks with:
 
 ```bash
-npm ci
-npm run check
+npm test
+npm run typecheck
+npm run build
 ```
 
-The check runs mathematical and rendering tests, verifies TypeScript and creates the production bundle. CI repeats the locked installation and the same verification on every push and pull request.
-
-## Project documents
-
-- [Presentation guide](docs/PRESENTATION.md)
-- [Release process](docs/RELEASING.md)
-- [Changelog](CHANGELOG.md)
-- [Contributing guide](CONTRIBUTING.md)
-- [Security policy](SECURITY.md)
-
-## Roadmap
-
-- Reflection at fixed and free boundaries.
-- Standing waves, nodes and antinodes.
-- Numerical 1D wave-equation solver using finite differences.
-- Stability, energy and convergence inspection.
-- Two-dimensional ripple sandbox.
-
-## License
-
-[MIT](LICENSE) — use it, study it and adapt it.
+I would like to continue the project with reflection, standing waves, nodes and antinodes. Lambdo is available under the [MIT license](LICENSE).

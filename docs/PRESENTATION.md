@@ -1,30 +1,44 @@
-# Presenting Lambdo
+# Como eu apresentaria o Lambdo
 
-This is a short demonstration route for a portfolio review, class presentation or technical interview.
+Eu começaria mostrando a foto da anotação que originou o projeto. A equação `v = λf` ocupava pouco espaço no papel, mas cada símbolo mudava uma parte diferente da onda. O Lambdo foi a minha forma de transformar essa página em um experimento.
 
-## One-minute version
+## Demonstração curta
 
-1. Start with the problem: wave equations are compact, but their parameters are hard to visualize from symbols alone.
-2. Open `lambdo` and change `λ`, `f` and `A` in travelling-wave mode.
-3. Switch to interference with `2` and change `φB`.
-4. Stop at `Δφ = 0`, `π/2` and `π` to show reinforcement, partial interference and cancellation.
-5. Press `H` to connect the current picture to the live equations.
-6. Run `npm run compare` to show that the visual states are also reproducible numerical results.
+1. Abra `lambdo` no modo de onda viajante.
+2. Mude `λ` e mostre a distância entre dois ciclos.
+3. Mude `f` e observe a velocidade, já que `v = λf`.
+4. Entre no modo de interferência com `2`.
+5. Compare `Δφ = 0`, `π/2` e `π`.
+6. Pressione `H` para ligar o desenho às equações atuais.
+7. Execute `npm run compare` para mostrar os mesmos casos em números.
 
-## Engineering points worth highlighting
+## A parte técnica que eu destacaria
 
-- The physics engine does not depend on the terminal UI.
-- Every frame is calculated from analytical equations; there is no prerecorded animation.
-- The ANSI runtime updates only changed regions and prevents an output queue from growing without bounds.
-- The same functions power the animation, comparison output and automated tests.
-- There are no runtime package dependencies.
+Cada ponto do traço é calculado pela equação da onda. O módulo de física não depende do terminal, então as mesmas funções são usadas na animação, na comparação e nos testes.
 
-## Useful commands
+Também explicaria o problema de desempenho que apareceu durante o desenvolvimento. A primeira versão escrevia quadros demais e a memória crescia até o Node encerrar o processo. A solução foi fazer um renderizador ANSI que atualiza somente as regiões alteradas, reduz a frequência de quadros e espera o terminal aceitar mais dados.
+
+Esse problema foi importante para mim porque a correção não veio de aumentar o limite de memória. Eu precisei entender onde o trabalho estava sendo criado.
+
+## Perguntas que eu me prepararia para responder
+
+**A animação é uma aproximação numérica?**
+
+Não nesta versão. Ela amostra a solução analítica `y(x,t) = A sen(kx - ωt + φ)` em várias posições.
+
+**Como o programa identifica interferência destrutiva?**
+
+Ele calcula a amplitude resultante a partir das duas amplitudes e da diferença de fase. Para ondas iguais em fases opostas, o valor chega a zero.
+
+**Por que usar o terminal?**
+
+Eu queria um laboratório leve, controlável pelo teclado e fácil de executar. O limite visual do terminal também me obrigou a pensar na legibilidade da linha em frequências baixas.
+
+## Comandos de apoio
 
 ```bash
 npm start
 npm run compare
-node dist/cli.js --compare --json
 node dist/cli.js --snapshot --mode interference
-npm run check
+npm test
 ```
