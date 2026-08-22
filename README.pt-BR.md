@@ -5,7 +5,7 @@
 </div>
 
 <p align="center">
-  <img src="./docs/assets/lambdo-interference.svg" width="940" alt="Interferência entre duas ondas no Lambdo" />
+  <img src="./docs/assets/lambdo-waves.svg" width="940" alt="Interferência animada entre duas ondas no Lambdo" />
 </p>
 
 O Lambdo nasceu de uma anotação da minha apostila de física. Eu tinha escrito `v = λf` ao lado de alguns desenhos de onda e fiquei pensando em como seria mudar cada valor e ver o desenho responder na hora.

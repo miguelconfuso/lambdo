@@ -5,7 +5,7 @@
 </div>
 
 <p align="center">
-  <img src="./docs/assets/lambdo-interference.svg" width="940" alt="Two waves and their interference result inside Lambdo" />
+  <img src="./docs/assets/lambdo-waves.svg" width="940" alt="Two animated waves and their interference result inside Lambdo" />
 </p>
 
 Lambdo began with a page from my physics notebook. I was studying wavelength, frequency and interference, and I wanted to see the symbols move instead of memorising an equation without an image.
