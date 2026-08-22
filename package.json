@@ -1,0 +1,58 @@
+{
+  "name": "lambdo-tui",
+  "version": "0.1.0",
+  "description": "An interactive wave laboratory for the terminal.",
+  "type": "module",
+  "bin": {
+    "lambdo": "dist/cli.js"
+  },
+  "files": ["dist/cli.js", "README.md", "README.pt-BR.md", "LICENSE"],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx src/cli.tsx",
+    "build": "tsup",
+    "start": "node dist/cli.js",
+    "snapshot": "node dist/cli.js --snapshot",
+    "test": "tsx --test test/wave.test.ts test/rendering.test.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "npm test && npm run typecheck && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/miguelconfuso/lambdo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/miguelconfuso/lambdo/issues"
+  },
+  "homepage": "https://github.com/miguelconfuso/lambdo#readme",
+  "author": "Miguel (@miguelconfuso)",
+  "keywords": [
+    "physics",
+    "waves",
+    "wavelength",
+    "interference",
+    "simulation",
+    "terminal",
+    "tui",
+    "education"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "ink": "^7.1.0",
+    "react": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2"
+  },
+  "overrides": {
+    "tsup": {
+      "esbuild": "0.27.2"
+    }
+  }
+}
