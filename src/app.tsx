@@ -34,6 +34,7 @@ const MODE_LABELS: Record<LabMode, string> = {
 
 const MIN_ANIMATION_FPS = 4;
 const MAX_ANIMATION_FPS = 10;
+const MAX_OUTPUT_BUFFER_BYTES = 32 * 1_024;
 export const LAMBDO_ASCII = [
   "       √≠π",
   "      ÷=≠+=",
@@ -95,12 +96,16 @@ export function App({
     let previousFrame = performance.now();
     const timer = setInterval(() => {
       const currentFrame = performance.now();
+      if (stdout && (stdout.writableNeedDrain || stdout.writableLength > MAX_OUTPUT_BUFFER_BYTES)) {
+        previousFrame = currentFrame;
+        return;
+      }
       const elapsedSeconds = (currentFrame - previousFrame) / 1_000;
       previousFrame = currentFrame;
       setTime(value => (value + elapsedSeconds * rate) % 10_000);
     }, frameInterval);
     return () => clearInterval(timer);
-  }, [frameInterval, paused, rate, tooSmall]);
+  }, [frameInterval, paused, rate, stdout, tooSmall]);
 
   const waveA = useMemo<WaveParameters>(() => ({ amplitude, wavelength, frequency, phase, direction: 1 }), [amplitude, frequency, phase, wavelength]);
   const waveB = useMemo<WaveParameters>(() => ({ amplitude, wavelength, frequency, phase: phaseB, direction: 1 }), [amplitude, frequency, phaseB, wavelength]);

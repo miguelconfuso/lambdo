@@ -6,8 +6,12 @@ export default defineConfig({
   platform: "node",
   target: "node22",
   bundle: true,
+  minify: true,
   noExternal: [/.*/],
-  define: { "process.env.DEV": '"false"' },
+  define: {
+    "process.env.DEV": '"false"',
+    "process.env.NODE_ENV": '"production"',
+  },
   esbuildPlugins: [{
     name: "ignore-optional-react-devtools",
     setup(build) {
