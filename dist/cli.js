@@ -38129,6 +38129,7 @@ var MODE_LABELS = {
   travelling: "TRAVELLING WAVE",
   interference: "INTERFERENCE"
 };
+var FRAME_INTERVAL_MS = 100;
 function App2({
   initialMode = "travelling",
   initialAmplitude = 1,
@@ -38160,7 +38161,13 @@ function App2({
   const selectedParameter = parameters[Math.min(selected, parameters.length - 1)];
   (0, import_react34.useEffect)(() => {
     if (paused || tooSmall) return;
-    const timer = setInterval(() => setTime((value) => (value + 0.05 * rate) % 1e4), 50);
+    let previousFrame = performance.now();
+    const timer = setInterval(() => {
+      const currentFrame = performance.now();
+      const elapsedSeconds = (currentFrame - previousFrame) / 1e3;
+      previousFrame = currentFrame;
+      setTime((value) => (value + elapsedSeconds * rate) % 1e4);
+    }, FRAME_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [paused, rate, tooSmall]);
   const waveA = (0, import_react34.useMemo)(() => ({ amplitude, wavelength, frequency, phase, direction: 1 }), [amplitude, frequency, phase, wavelength]);
@@ -38277,7 +38284,7 @@ function TravellingView({ wave, time, width, height }) {
   const traceHeight = Math.max(8, height - 1);
   const trace = renderTrace({ width, height: traceHeight, span: 20, amplitudeScale: Math.max(0.1, wave.amplitude), sample: (x) => displacementAt(x, time, wave) });
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(WavePlot, { trace, traceColor: palette.waveA, glowColor: palette.waveAGlow }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(WavePlot, { trace, traceColor: palette.waveA }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.muted, children: [
       "0m ",
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.border, children: "\xB7".repeat(Math.max(0, width - 10)) }),
@@ -38295,9 +38302,9 @@ function InterferenceView({ waveA, waveB, time, resultAmplitude, kind, width, he
   const color = kind === "constructive" ? palette.success : kind === "destructive" ? palette.waveA : palette.result;
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, bold: true, children: "WAVE A" }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(WavePlot, { trace: traceA, traceColor: palette.waveA, glowColor: palette.waveAGlow }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(WavePlot, { trace: traceA, traceColor: palette.waveA }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveB, bold: true, children: "WAVE B" }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(WavePlot, { trace: traceB, traceColor: palette.waveB, glowColor: palette.waveBGlow }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(WavePlot, { trace: traceB, traceColor: palette.waveB }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.result, bold: true, children: "RESULT" }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.muted, children: [
@@ -38307,14 +38314,11 @@ function InterferenceView({ waveA, waveB, time, resultAmplitude, kind, width, he
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color, bold: true, children: kind.toUpperCase() })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(WavePlot, { trace: traceResult, traceColor: palette.result, glowColor: palette.resultGlow })
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(WavePlot, { trace: traceResult, traceColor: palette.result })
   ] });
 }
-function WavePlot({ trace, traceColor, glowColor }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { flexDirection: "column", children: trace.map((row, rowIndex) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { children: row.map((cell, columnIndex) => {
-    const color = cell.kind === "trace" ? traceColor : cell.kind === "glow" ? glowColor : cell.kind === "axis" ? palette.border : palette.primary;
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color, bold: cell.kind === "trace", children: cell.glyph }, columnIndex);
-  }) }, rowIndex)) });
+function WavePlot({ trace, traceColor }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: traceColor, children: traceToText(trace) });
 }
 function ParameterRow({ active, label, value }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: active ? palette.waveA : palette.primary, backgroundColor: active ? palette.surface : void 0, bold: active, children: [

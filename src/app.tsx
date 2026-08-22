@@ -11,7 +11,7 @@ import {
   superpositionAt,
   type WaveParameters,
 } from "./physics/wave.js";
-import { renderTrace, type WaveCell } from "./rendering/wave.js";
+import { renderTrace, traceToText, type WaveCell } from "./rendering/wave.js";
 
 export type LabMode = "travelling" | "interference";
 type Screen = "lab" | "learn";
@@ -36,6 +36,8 @@ const MODE_LABELS: Record<LabMode, string> = {
   travelling: "TRAVELLING WAVE",
   interference: "INTERFERENCE",
 };
+
+const FRAME_INTERVAL_MS = 100;
 
 export interface AppProps {
   initialMode?: LabMode;
@@ -79,7 +81,13 @@ export function App({
 
   useEffect(() => {
     if (paused || tooSmall) return;
-    const timer = setInterval(() => setTime(value => (value + 0.05 * rate) % 10_000), 50);
+    let previousFrame = performance.now();
+    const timer = setInterval(() => {
+      const currentFrame = performance.now();
+      const elapsedSeconds = (currentFrame - previousFrame) / 1_000;
+      previousFrame = currentFrame;
+      setTime(value => (value + elapsedSeconds * rate) % 10_000);
+    }, FRAME_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [paused, rate, tooSmall]);
 
@@ -176,7 +184,7 @@ function TravellingView({ wave, time, width, height }: { wave: WaveParameters; t
   const traceHeight = Math.max(8, height - 1);
   const trace = renderTrace({ width, height: traceHeight, span: 20, amplitudeScale: Math.max(0.1, wave.amplitude), sample: x => displacementAt(x, time, wave) });
   return <>
-    <WavePlot trace={trace} traceColor={palette.waveA} glowColor={palette.waveAGlow}/>
+    <WavePlot trace={trace} traceColor={palette.waveA}/>
     <Text color={palette.muted}>0m <Text color={palette.border}>{"·".repeat(Math.max(0, width - 10))}</Text> 20m →</Text>
   </>;
 }
@@ -191,19 +199,16 @@ function InterferenceView({ waveA, waveB, time, resultAmplitude, kind, width, he
   const color = kind === "constructive" ? palette.success : kind === "destructive" ? palette.waveA : palette.result;
   return <>
     <Text color={palette.waveA} bold>WAVE A</Text>
-    <WavePlot trace={traceA} traceColor={palette.waveA} glowColor={palette.waveAGlow}/>
+    <WavePlot trace={traceA} traceColor={palette.waveA}/>
     <Text color={palette.waveB} bold>WAVE B</Text>
-    <WavePlot trace={traceB} traceColor={palette.waveB} glowColor={palette.waveBGlow}/>
+    <WavePlot trace={traceB} traceColor={palette.waveB}/>
     <Text><Text color={palette.result} bold>RESULT</Text><Text color={palette.muted}>  A = {resultAmplitude.toFixed(2)}  </Text><Text color={color} bold>{kind.toUpperCase()}</Text></Text>
-    <WavePlot trace={traceResult} traceColor={palette.result} glowColor={palette.resultGlow}/>
+    <WavePlot trace={traceResult} traceColor={palette.result}/>
   </>;
 }
 
-function WavePlot({ trace, traceColor, glowColor }: { trace: WaveCell[][]; traceColor: string; glowColor: string }) {
-  return <Box flexDirection="column">{trace.map((row, rowIndex) => <Text key={rowIndex}>{row.map((cell, columnIndex) => {
-    const color = cell.kind === "trace" ? traceColor : cell.kind === "glow" ? glowColor : cell.kind === "axis" ? palette.border : palette.primary;
-    return <Text key={columnIndex} color={color} bold={cell.kind === "trace"}>{cell.glyph}</Text>;
-  })}</Text>)}</Box>;
+function WavePlot({ trace, traceColor }: { trace: WaveCell[][]; traceColor: string }) {
+  return <Text color={traceColor}>{traceToText(trace)}</Text>;
 }
 
 function ParameterRow({ active, label, value }: { active: boolean; label: string; value: string }) {
