@@ -10,7 +10,7 @@
 
 O Lambdo nasceu de uma anotação da minha apostila de física. Eu tinha escrito `v = λf` ao lado de alguns desenhos de onda e fiquei pensando em como seria mudar cada valor e ver o desenho responder na hora.
 
-Tenho 16 anos e fiz o projeto para juntar duas coisas que estou aprendendo: física e programação. Ele ainda é um laboratório pequeno, mas todas as ondas são calculadas de verdade. A interface não reproduz um GIF pronto.
+Fiz o projeto para juntar física e programação em um experimento que pudesse ser alterado em tempo real. Ele ainda é um laboratório pequeno, mas todas as ondas são calculadas de verdade. A interface não reproduz um GIF pronto.
 
 ## O que acontece quando um valor muda
 

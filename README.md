@@ -10,7 +10,7 @@
 
 Lambdo began with a page from my physics notebook. I was studying wavelength, frequency and interference, and I wanted to see the symbols move instead of memorising an equation without an image.
 
-I am a 16-year-old student, and this project is my attempt to connect the physics I learn in class with the programming I study on my own. Lambdo runs in the terminal and calculates every displayed point from the current wave parameters.
+This project connects wave physics with a program that can be changed and measured. Lambdo runs in the terminal and calculates every displayed point from the current wave parameters.
 
 ## From the equation to the screen
 
