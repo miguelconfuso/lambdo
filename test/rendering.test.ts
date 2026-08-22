@@ -19,7 +19,9 @@ test("waveform uses terminal glyphs and glow instead of a prebuilt image", () =>
   const cells = trace.flat();
   assert.ok(cells.some(cell => cell.kind === "trace"));
   assert.ok(cells.some(cell => cell.kind === "glow"));
-  assert.match(traceToText(trace), /[╱╲━▓█]/u);
+  const text = traceToText(trace);
+  assert.match(text, /[█▓▒A0=+▪●░]/u);
+  assert.doesNotMatch(text, /[╱╲/\\|]/u);
 });
 
 test("renderer rejects dimensions that cannot represent a wave", () => {

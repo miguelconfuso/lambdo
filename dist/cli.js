@@ -38066,6 +38066,7 @@ function equationFor(wave) {
 
 // src/rendering/wave.ts
 var EMPTY = { glyph: " ", kind: "empty", magnitude: 0 };
+var TRACE_GLYPHS = ["\u2588", "\u2593", "\u2592", "A", "0", "=", "+", "\u25AA", "\u25CF", "\u2591"];
 function makeCell(glyph, kind, magnitude = 0) {
   return { glyph, kind, magnitude };
 }
@@ -38077,7 +38078,9 @@ function renderTrace({ width, height, span, amplitudeScale, sample, glow = true 
   const grid = Array.from({ length: height }, () => Array.from({ length: width }, () => ({ ...EMPTY })));
   const center = Math.floor(height / 2);
   const verticalRadius = Math.max(1, center - 1);
-  for (let column = 0; column < width; column += 1) grid[center][column] = makeCell(column % 5 === 0 ? "\u253C" : "\u2500", "axis");
+  for (let column = 0; column < width; column += 1) {
+    if (column % 2 === 0) grid[center][column] = makeCell("\xB7", "axis");
+  }
   const rows = [];
   const magnitudes = [];
   for (let column = 0; column < width; column += 1) {
@@ -38092,14 +38095,12 @@ function renderTrace({ width, height, span, amplitudeScale, sample, glow = true 
     if (glow) {
       for (const glowRow of [row - 1, row + 1]) {
         if (glowRow >= 0 && glowRow < height && grid[glowRow][column].kind === "empty") {
-          grid[glowRow][column] = makeCell(magnitude > 0.72 ? "\u2592" : "\u2591", "glow", magnitude);
+          grid[glowRow][column] = makeCell(magnitude > 0.72 ? "\u2591" : "\xB7", "glow", magnitude);
         }
       }
     }
-    const previous = rows[Math.max(0, column - 1)];
-    const next = rows[Math.min(width - 1, column + 1)];
-    const slope = next - previous;
-    const glyph = magnitude > 0.92 ? "\u2588" : slope < 0 ? "\u2571" : slope > 0 ? "\u2572" : magnitude > 0.6 ? "\u2593" : "\u2501";
+    const glyphIndex = (column * 7 + Math.round(magnitude * 10)) % TRACE_GLYPHS.length;
+    const glyph = magnitude > 0.94 ? "\u2588" : magnitude > 0.78 ? "\u2593" : TRACE_GLYPHS[glyphIndex];
     grid[row][column] = makeCell(glyph, "trace", magnitude);
   }
   return grid;
@@ -38151,6 +38152,10 @@ function App2({
   const rows = stdout?.rows ?? 30;
   const compact = rows < 28;
   const tooSmall = columns < 80 || rows < 24;
+  const sidebarWidth = 25;
+  const canvasWidth = columns - sidebarWidth;
+  const plotWidth = Math.max(44, canvasWidth - 4);
+  const plotHeight = Math.max(12, rows - (compact ? 9 : 10));
   const parameters = mode === "interference" ? ["amplitude", "wavelength", "frequency", "phase", "phaseB", "rate"] : ["amplitude", "wavelength", "frequency", "phase", "rate"];
   const selectedParameter = parameters[Math.min(selected, parameters.length - 1)];
   (0, import_react34.useEffect)(() => {
@@ -38223,40 +38228,28 @@ function App2({
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: "[Q] QUIT" })
     ] });
   }
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(FullScreen, { children: [
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Header, { paused, compact }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Gap, {}),
-    screen === "lab" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { gap: 2, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { title: "WAVE CONTROL", width: 24, height: compact ? 19 : 22, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: "MODE" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: mode === "travelling" ? palette.waveA : palette.primary, bold: mode === "travelling", children: "1  travelling" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: mode === "interference" ? palette.waveB : palette.primary, bold: mode === "interference", children: "2  interference" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Gap, {}),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.muted, children: [
-          "PARAMETERS  ",
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.border, children: "\u2191\u2193" })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ParameterRow, { active: selectedParameter === "amplitude", label: "A", value: amplitude.toFixed(2) }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ParameterRow, { active: selectedParameter === "wavelength", label: "\u03BB", value: `${wavelength.toFixed(2)} m` }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ParameterRow, { active: selectedParameter === "frequency", label: "f", value: `${frequency.toFixed(2)} Hz` }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ParameterRow, { active: selectedParameter === "phase", label: "\u03C6A", value: `${phase.toFixed(2)} rad` }),
-        mode === "interference" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ParameterRow, { active: selectedParameter === "phaseB", label: "\u03C6B", value: `${phaseB.toFixed(2)} rad` }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ParameterRow, { active: selectedParameter === "rate", label: "time", value: `${rate.toFixed(2)}\xD7` }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Gap, {}),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: "STATE" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: paused ? palette.result : palette.success, bold: true, children: paused ? "\u2161 PAUSED" : "\u25B6 PROPAGATING" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.primary, children: [
-          "t = ",
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.result, children: [
-            time.toFixed(2),
-            " s"
-          ] })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { backgroundColor: palette.waveA, color: palette.button, bold: true, children: " \u2190 / \u2192  CHANGE " })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { title: `${MODE_LABELS[mode]}  /  20m`, width: 54, height: compact ? 19 : 22, children: [
-        mode === "travelling" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TravellingView, { wave: waveA, time, compact }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InterferenceView, { waveA, waveB, time, resultAmplitude, kind: interference, compact }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.border, children: "\u2500".repeat(50) }),
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FullScreen, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { width: columns, height: rows - 1, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+      Sidebar,
+      {
+        width: sidebarWidth,
+        mode,
+        selected: selectedParameter,
+        amplitude,
+        wavelength,
+        frequency,
+        phase,
+        phaseB,
+        rate,
+        time,
+        paused
+      }
+    ),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { width: canvasWidth, height: rows - 1, paddingX: 1, flexDirection: "column", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CanvasHeader, { mode, paused, time, compact }),
+      screen === "lab" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { height: plotHeight, flexDirection: "column", justifyContent: "center", children: mode === "travelling" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TravellingView, { wave: waveA, time, width: plotWidth, height: plotHeight }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InterferenceView, { waveA, waveB, time, resultAmplitude, kind: interference, width: plotWidth, height: plotHeight }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.border, children: "\xB7".repeat(plotWidth) }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.primary, children: [
           "v ",
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.success, children: [
@@ -38274,56 +38267,31 @@ function App2({
             " rad/s"
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: mode === "travelling" ? equationFor(waveA) : `\u0394\u03C6 = ${phaseDelta.toFixed(2)} rad  \xB7  Aresult = ${resultAmplitude.toFixed(2)}` })
-      ] })
-    ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Theory, { compact }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Gap, {}),
-    compact ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.muted, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[\u2191\u2193]" }),
-      " SELECT  ",
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[\u2190\u2192]" }),
-      " CHANGE  ",
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[SPACE]" }),
-      " PAUSE  ",
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[M]" }),
-      " MODE  ",
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[Q]" }),
-      " QUIT"
-    ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.muted, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[\u2191\u2193]" }),
-      " SELECT  ",
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[\u2190\u2192]" }),
-      " CHANGE  ",
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[SPACE]" }),
-      " PAUSE  ",
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[M]" }),
-      " MODE  ",
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[H]" }),
-      " LEARN  ",
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[R]" }),
-      " RESET  ",
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[Q]" }),
-      " QUIT"
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: mode === "travelling" ? equationFor(waveA) : `\u0394\u03C6 = ${phaseDelta.toFixed(2)} rad  \xB7  Aresult = ${resultAmplitude.toFixed(2)}` }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CanvasShortcuts, { compact })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Theory, { compact })
     ] })
-  ] });
+  ] }) });
 }
-function TravellingView({ wave, time, compact }) {
-  const trace = renderTrace({ width: 50, height: compact ? 10 : 13, span: 20, amplitudeScale: Math.max(0.1, wave.amplitude), sample: (x) => displacementAt(x, time, wave) });
+function TravellingView({ wave, time, width, height }) {
+  const traceHeight = Math.max(8, height - 1);
+  const trace = renderTrace({ width, height: traceHeight, span: 20, amplitudeScale: Math.max(0.1, wave.amplitude), sample: (x) => displacementAt(x, time, wave) });
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: "AMPLITUDE" }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(WavePlot, { trace, traceColor: palette.waveA, glowColor: palette.waveAGlow }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.muted, children: [
       "0m ",
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.border, children: "\xB7".repeat(39) }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.border, children: "\xB7".repeat(Math.max(0, width - 10)) }),
       " 20m \u2192"
     ] })
   ] });
 }
-function InterferenceView({ waveA, waveB, time, resultAmplitude, kind, compact }) {
-  const common = { width: 50, span: 20 };
-  const traceA = renderTrace({ ...common, height: compact ? 3 : 4, amplitudeScale: waveA.amplitude, sample: (x) => displacementAt(x, time, waveA), glow: false });
-  const traceB = renderTrace({ ...common, height: compact ? 3 : 4, amplitudeScale: waveB.amplitude, sample: (x) => displacementAt(x, time, waveB), glow: false });
-  const traceResult = renderTrace({ ...common, height: compact ? 4 : 5, amplitudeScale: Math.max(0.1, waveA.amplitude + waveB.amplitude), sample: (x) => superpositionAt(x, time, [waveA, waveB]) });
+function InterferenceView({ waveA, waveB, time, resultAmplitude, kind, width, height }) {
+  const traceHeight = Math.max(3, Math.floor((height - 3) / 3));
+  const resultHeight = Math.max(3, height - 3 - traceHeight * 2);
+  const common = { width, span: 20 };
+  const traceA = renderTrace({ ...common, height: traceHeight, amplitudeScale: waveA.amplitude, sample: (x) => displacementAt(x, time, waveA), glow: false });
+  const traceB = renderTrace({ ...common, height: traceHeight, amplitudeScale: waveB.amplitude, sample: (x) => displacementAt(x, time, waveB), glow: false });
+  const traceResult = renderTrace({ ...common, height: resultHeight, amplitudeScale: Math.max(0.1, waveA.amplitude + waveB.amplitude), sample: (x) => superpositionAt(x, time, [waveA, waveB]) });
   const color = kind === "constructive" ? palette.success : kind === "destructive" ? palette.waveA : palette.result;
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, bold: true, children: "WAVE A" }),
@@ -38356,8 +38324,81 @@ function ParameterRow({ active, label, value }) {
     value.padStart(10)
   ] });
 }
+function Sidebar({ width, mode, selected, amplitude, wavelength, frequency, phase, phaseB, rate, time, paused }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { width, height: "100%", borderStyle: "single", borderColor: palette.border, paddingX: 1, flexDirection: "column", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, bold: true, children: "\u03BBAMB" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveB, bold: true, children: "Do" })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: "WAVE CONTROL" }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Gap, {}),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: "MODE" }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: mode === "travelling" ? palette.waveA : palette.primary, bold: mode === "travelling", children: "1  travelling" }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: mode === "interference" ? palette.waveB : palette.primary, bold: mode === "interference", children: "2  interference" }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Gap, {}),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.muted, children: [
+      "PARAMETERS  ",
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.border, children: "\u2191\u2193" })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ParameterRow, { active: selected === "amplitude", label: "A", value: amplitude.toFixed(2) }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ParameterRow, { active: selected === "wavelength", label: "\u03BB", value: `${wavelength.toFixed(2)} m` }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ParameterRow, { active: selected === "frequency", label: "f", value: `${frequency.toFixed(2)} Hz` }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ParameterRow, { active: selected === "phase", label: "\u03C6A", value: `${phase.toFixed(2)} rad` }),
+    mode === "interference" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ParameterRow, { active: selected === "phaseB", label: "\u03C6B", value: `${phaseB.toFixed(2)} rad` }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ParameterRow, { active: selected === "rate", label: "time", value: `${rate.toFixed(2)}\xD7` }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { flexGrow: 1 }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: "STATE" }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: paused ? palette.result : palette.success, bold: true, children: paused ? "\u2161 PAUSED" : "\u25B6 PROPAGATING" }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.primary, children: [
+      "t = ",
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.result, children: [
+        time.toFixed(2),
+        " s"
+      ] })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { backgroundColor: palette.waveA, color: palette.button, bold: true, children: " \u2190  \u2192  CHANGE " })
+  ] });
+}
+function CanvasHeader({ mode, paused, time, compact }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "column", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { justifyContent: "space-between", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: mode === "travelling" ? palette.waveA : palette.waveB, bold: true, children: MODE_LABELS[mode] }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: paused ? palette.result : palette.success, children: paused ? "TIME FROZEN" : `LIVE  t=${time.toFixed(2)}s` })
+    ] }),
+    !compact && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: "CHARACTER WAVEFIELD  \xB7  0\u201420 METRES" })
+  ] });
+}
+function CanvasShortcuts({ compact }) {
+  return compact ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.muted, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[\u2190\u2192]" }),
+    " CHANGE  ",
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[SPACE]" }),
+    " PAUSE  ",
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[M]" }),
+    " MODE  ",
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[Q]" }),
+    " QUIT"
+  ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.muted, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[\u2191\u2193]" }),
+    " SELECT  ",
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[\u2190\u2192]" }),
+    " CHANGE  ",
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[SPACE]" }),
+    " PAUSE  ",
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[M]" }),
+    " MODE  ",
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[H]" }),
+    " LEARN  ",
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[R]" }),
+    " RESET  ",
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[Q]" }),
+    " QUIT"
+  ] });
+}
 function Theory({ compact }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { title: "LEARN \xB7 SEE THE WAVE, UNDERSTAND THE MATH", width: 80, height: compact ? 19 : 22, children: [
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexGrow: 1, flexDirection: "column", justifyContent: "center", paddingX: 2, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, bold: true, children: "LEARN \xB7 SEE THE WAVE, UNDERSTAND THE MATH" }),
+    !compact && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Gap, {}),
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, bold: true, children: "FUNDAMENTAL RELATION" }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.primary, children: "v = \u03BBf" }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: "wave speed = wavelength \xD7 frequency" }),
@@ -38375,37 +38416,9 @@ function Theory({ compact }) {
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: "[H / ESC] RETURN TO LAB" })
   ] });
 }
-function Header({ paused, compact }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "column", alignItems: "center", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, bold: true, children: "\u03BBAMB" }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveB, bold: true, children: "Do" }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: "  \xB7  interactive wave laboratory" })
-    ] }),
-    !compact && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.muted, children: [
-      "TRAVEL / INTERFERE / UNDERSTAND  \xB7  ",
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: paused ? palette.result : palette.success, children: paused ? "TIME FROZEN" : "LIVE EQUATIONS" })
-    ] })
-  ] });
-}
 function FullScreen({ children }) {
   const { stdout } = use_stdout_default();
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { width: stdout?.columns || 80, height: Math.max(23, (stdout?.rows || 30) - 1), flexDirection: "column", alignItems: "center", justifyContent: "center", children });
-}
-function Panel({ title, width, height, children }) {
-  const tail = Math.max(0, width - title.length - 6);
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "column", width, height, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.border, children: "\u256D\u2500 " }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, bold: true, children: title }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.border, children: [
-        " ",
-        "\u2500".repeat(tail),
-        "\u256E"
-      ] })
-    ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { width, height: height - 1, borderStyle: "round", borderTop: false, borderColor: palette.border, paddingX: 1, flexDirection: "column", children })
-  ] });
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { width: stdout?.columns || 80, height: Math.max(23, (stdout?.rows || 30) - 1), children });
 }
 function Gap({ lines = 1 }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { flexDirection: "column", flexShrink: 0, children: Array.from({ length: lines }, (_, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { children: " " }, index)) });

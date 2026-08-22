@@ -67,6 +67,10 @@ export function App({
   const rows = stdout?.rows ?? 30;
   const compact = rows < 28;
   const tooSmall = columns < 80 || rows < 24;
+  const sidebarWidth = 25;
+  const canvasWidth = columns - sidebarWidth;
+  const plotWidth = Math.max(44, canvasWidth - 4);
+  const plotHeight = Math.max(12, rows - (compact ? 9 : 10));
 
   const parameters: Parameter[] = mode === "interference"
     ? ["amplitude", "wavelength", "frequency", "phase", "phaseB", "rate"]
@@ -136,57 +140,54 @@ export function App({
   }
 
   return <FullScreen>
-    <Header paused={paused} compact={compact}/>
-    <Gap/>
-    {screen === "lab" ? <Box gap={2}>
-      <Panel title="WAVE CONTROL" width={24} height={compact ? 19 : 22}>
-        <Text color={palette.muted}>MODE</Text>
-        <Text color={mode === "travelling" ? palette.waveA : palette.primary} bold={mode === "travelling"}>1  travelling</Text>
-        <Text color={mode === "interference" ? palette.waveB : palette.primary} bold={mode === "interference"}>2  interference</Text>
-        <Gap/>
-        <Text color={palette.muted}>PARAMETERS  <Text color={palette.border}>↑↓</Text></Text>
-        <ParameterRow active={selectedParameter === "amplitude"} label="A" value={amplitude.toFixed(2)}/>
-        <ParameterRow active={selectedParameter === "wavelength"} label="λ" value={`${wavelength.toFixed(2)} m`}/>
-        <ParameterRow active={selectedParameter === "frequency"} label="f" value={`${frequency.toFixed(2)} Hz`}/>
-        <ParameterRow active={selectedParameter === "phase"} label="φA" value={`${phase.toFixed(2)} rad`}/>
-        {mode === "interference" && <ParameterRow active={selectedParameter === "phaseB"} label="φB" value={`${phaseB.toFixed(2)} rad`}/>} 
-        <ParameterRow active={selectedParameter === "rate"} label="time" value={`${rate.toFixed(2)}×`}/>
-        <Gap/>
-        <Text color={palette.muted}>STATE</Text>
-        <Text color={paused ? palette.result : palette.success} bold>{paused ? "Ⅱ PAUSED" : "▶ PROPAGATING"}</Text>
-        <Text color={palette.primary}>t = <Text color={palette.result}>{time.toFixed(2)} s</Text></Text>
-        <Text backgroundColor={palette.waveA} color={palette.button} bold> ← / →  CHANGE </Text>
-      </Panel>
-      <Panel title={`${MODE_LABELS[mode]}  /  20m`} width={54} height={compact ? 19 : 22}>
-        {mode === "travelling"
-          ? <TravellingView wave={waveA} time={time} compact={compact}/>
-          : <InterferenceView waveA={waveA} waveB={waveB} time={time} resultAmplitude={resultAmplitude} kind={interference} compact={compact}/>} 
-        <Text color={palette.border}>{"─".repeat(50)}</Text>
-        <Text color={palette.primary}>v <Text color={palette.success}>{derived.speed.toFixed(2)} m/s</Text>   k <Text color={palette.waveB}>{derived.waveNumber.toFixed(2)} rad/m</Text>   ω <Text color={palette.result}>{derived.angularFrequency.toFixed(2)} rad/s</Text></Text>
-        <Text color={palette.muted}>{mode === "travelling" ? equationFor(waveA) : `Δφ = ${phaseDelta.toFixed(2)} rad  ·  Aresult = ${resultAmplitude.toFixed(2)}`}</Text>
-      </Panel>
-    </Box> : <Theory compact={compact}/>}
-    <Gap/>
-    {compact
-      ? <Text color={palette.muted}><Text color={palette.waveA}>[↑↓]</Text> SELECT  <Text color={palette.waveA}>[←→]</Text> CHANGE  <Text color={palette.waveA}>[SPACE]</Text> PAUSE  <Text color={palette.waveA}>[M]</Text> MODE  <Text color={palette.waveA}>[Q]</Text> QUIT</Text>
-      : <Text color={palette.muted}><Text color={palette.waveA}>[↑↓]</Text> SELECT  <Text color={palette.waveA}>[←→]</Text> CHANGE  <Text color={palette.waveA}>[SPACE]</Text> PAUSE  <Text color={palette.waveA}>[M]</Text> MODE  <Text color={palette.waveA}>[H]</Text> LEARN  <Text color={palette.waveA}>[R]</Text> RESET  <Text color={palette.waveA}>[Q]</Text> QUIT</Text>}
+    <Box width={columns} height={rows - 1}>
+      <Sidebar
+        width={sidebarWidth}
+        mode={mode}
+        selected={selectedParameter}
+        amplitude={amplitude}
+        wavelength={wavelength}
+        frequency={frequency}
+        phase={phase}
+        phaseB={phaseB}
+        rate={rate}
+        time={time}
+        paused={paused}
+      />
+      <Box width={canvasWidth} height={rows - 1} paddingX={1} flexDirection="column">
+        <CanvasHeader mode={mode} paused={paused} time={time} compact={compact}/>
+        {screen === "lab" ? <>
+          <Box height={plotHeight} flexDirection="column" justifyContent="center">
+            {mode === "travelling"
+              ? <TravellingView wave={waveA} time={time} width={plotWidth} height={plotHeight}/>
+              : <InterferenceView waveA={waveA} waveB={waveB} time={time} resultAmplitude={resultAmplitude} kind={interference} width={plotWidth} height={plotHeight}/>}
+          </Box>
+          <Text color={palette.border}>{"·".repeat(plotWidth)}</Text>
+          <Text color={palette.primary}>v <Text color={palette.success}>{derived.speed.toFixed(2)} m/s</Text>   k <Text color={palette.waveB}>{derived.waveNumber.toFixed(2)} rad/m</Text>   ω <Text color={palette.result}>{derived.angularFrequency.toFixed(2)} rad/s</Text></Text>
+          <Text color={palette.muted}>{mode === "travelling" ? equationFor(waveA) : `Δφ = ${phaseDelta.toFixed(2)} rad  ·  Aresult = ${resultAmplitude.toFixed(2)}`}</Text>
+          <CanvasShortcuts compact={compact}/>
+        </> : <Theory compact={compact}/>}
+      </Box>
+    </Box>
   </FullScreen>;
 }
 
-function TravellingView({ wave, time, compact }: { wave: WaveParameters; time: number; compact: boolean }) {
-  const trace = renderTrace({ width: 50, height: compact ? 10 : 13, span: 20, amplitudeScale: Math.max(0.1, wave.amplitude), sample: x => displacementAt(x, time, wave) });
+function TravellingView({ wave, time, width, height }: { wave: WaveParameters; time: number; width: number; height: number }) {
+  const traceHeight = Math.max(8, height - 1);
+  const trace = renderTrace({ width, height: traceHeight, span: 20, amplitudeScale: Math.max(0.1, wave.amplitude), sample: x => displacementAt(x, time, wave) });
   return <>
-    <Text color={palette.muted}>AMPLITUDE</Text>
     <WavePlot trace={trace} traceColor={palette.waveA} glowColor={palette.waveAGlow}/>
-    <Text color={palette.muted}>0m <Text color={palette.border}>{"·".repeat(39)}</Text> 20m →</Text>
+    <Text color={palette.muted}>0m <Text color={palette.border}>{"·".repeat(Math.max(0, width - 10))}</Text> 20m →</Text>
   </>;
 }
 
-function InterferenceView({ waveA, waveB, time, resultAmplitude, kind, compact }: { waveA: WaveParameters; waveB: WaveParameters; time: number; resultAmplitude: number; kind: string; compact: boolean }) {
-  const common = { width: 50, span: 20 };
-  const traceA = renderTrace({ ...common, height: compact ? 3 : 4, amplitudeScale: waveA.amplitude, sample: x => displacementAt(x, time, waveA), glow: false });
-  const traceB = renderTrace({ ...common, height: compact ? 3 : 4, amplitudeScale: waveB.amplitude, sample: x => displacementAt(x, time, waveB), glow: false });
-  const traceResult = renderTrace({ ...common, height: compact ? 4 : 5, amplitudeScale: Math.max(0.1, waveA.amplitude + waveB.amplitude), sample: x => superpositionAt(x, time, [waveA, waveB]) });
+function InterferenceView({ waveA, waveB, time, resultAmplitude, kind, width, height }: { waveA: WaveParameters; waveB: WaveParameters; time: number; resultAmplitude: number; kind: string; width: number; height: number }) {
+  const traceHeight = Math.max(3, Math.floor((height - 3) / 3));
+  const resultHeight = Math.max(3, height - 3 - traceHeight * 2);
+  const common = { width, span: 20 };
+  const traceA = renderTrace({ ...common, height: traceHeight, amplitudeScale: waveA.amplitude, sample: x => displacementAt(x, time, waveA), glow: false });
+  const traceB = renderTrace({ ...common, height: traceHeight, amplitudeScale: waveB.amplitude, sample: x => displacementAt(x, time, waveB), glow: false });
+  const traceResult = renderTrace({ ...common, height: resultHeight, amplitudeScale: Math.max(0.1, waveA.amplitude + waveB.amplitude), sample: x => superpositionAt(x, time, [waveA, waveB]) });
   const color = kind === "constructive" ? palette.success : kind === "destructive" ? palette.waveA : palette.result;
   return <>
     <Text color={palette.waveA} bold>WAVE A</Text>
@@ -209,8 +210,62 @@ function ParameterRow({ active, label, value }: { active: boolean; label: string
   return <Text color={active ? palette.waveA : palette.primary} backgroundColor={active ? palette.surface : undefined} bold={active}>{active ? ">" : " "} {label.padEnd(5)}{value.padStart(10)}</Text>;
 }
 
+function Sidebar({ width, mode, selected, amplitude, wavelength, frequency, phase, phaseB, rate, time, paused }: {
+  width: number;
+  mode: LabMode;
+  selected: Parameter;
+  amplitude: number;
+  wavelength: number;
+  frequency: number;
+  phase: number;
+  phaseB: number;
+  rate: number;
+  time: number;
+  paused: boolean;
+}) {
+  return <Box width={width} height="100%" borderStyle="single" borderColor={palette.border} paddingX={1} flexDirection="column">
+    <Text><Text color={palette.waveA} bold>λAMB</Text><Text color={palette.waveB} bold>Do</Text></Text>
+    <Text color={palette.muted}>WAVE CONTROL</Text>
+    <Gap/>
+    <Text color={palette.muted}>MODE</Text>
+    <Text color={mode === "travelling" ? palette.waveA : palette.primary} bold={mode === "travelling"}>1  travelling</Text>
+    <Text color={mode === "interference" ? palette.waveB : palette.primary} bold={mode === "interference"}>2  interference</Text>
+    <Gap/>
+    <Text color={palette.muted}>PARAMETERS  <Text color={palette.border}>↑↓</Text></Text>
+    <ParameterRow active={selected === "amplitude"} label="A" value={amplitude.toFixed(2)}/>
+    <ParameterRow active={selected === "wavelength"} label="λ" value={`${wavelength.toFixed(2)} m`}/>
+    <ParameterRow active={selected === "frequency"} label="f" value={`${frequency.toFixed(2)} Hz`}/>
+    <ParameterRow active={selected === "phase"} label="φA" value={`${phase.toFixed(2)} rad`}/>
+    {mode === "interference" && <ParameterRow active={selected === "phaseB"} label="φB" value={`${phaseB.toFixed(2)} rad`}/>}
+    <ParameterRow active={selected === "rate"} label="time" value={`${rate.toFixed(2)}×`}/>
+    <Box flexGrow={1}/>
+    <Text color={palette.muted}>STATE</Text>
+    <Text color={paused ? palette.result : palette.success} bold>{paused ? "Ⅱ PAUSED" : "▶ PROPAGATING"}</Text>
+    <Text color={palette.primary}>t = <Text color={palette.result}>{time.toFixed(2)} s</Text></Text>
+    <Text backgroundColor={palette.waveA} color={palette.button} bold> ←  →  CHANGE </Text>
+  </Box>;
+}
+
+function CanvasHeader({ mode, paused, time, compact }: { mode: LabMode; paused: boolean; time: number; compact: boolean }) {
+  return <Box flexDirection="column">
+    <Box justifyContent="space-between">
+      <Text color={mode === "travelling" ? palette.waveA : palette.waveB} bold>{MODE_LABELS[mode]}</Text>
+      <Text color={paused ? palette.result : palette.success}>{paused ? "TIME FROZEN" : `LIVE  t=${time.toFixed(2)}s`}</Text>
+    </Box>
+    {!compact && <Text color={palette.muted}>CHARACTER WAVEFIELD  ·  0—20 METRES</Text>}
+  </Box>;
+}
+
+function CanvasShortcuts({ compact }: { compact: boolean }) {
+  return compact
+    ? <Text color={palette.muted}><Text color={palette.waveA}>[←→]</Text> CHANGE  <Text color={palette.waveA}>[SPACE]</Text> PAUSE  <Text color={palette.waveA}>[M]</Text> MODE  <Text color={palette.waveA}>[Q]</Text> QUIT</Text>
+    : <Text color={palette.muted}><Text color={palette.waveA}>[↑↓]</Text> SELECT  <Text color={palette.waveA}>[←→]</Text> CHANGE  <Text color={palette.waveA}>[SPACE]</Text> PAUSE  <Text color={palette.waveA}>[M]</Text> MODE  <Text color={palette.waveA}>[H]</Text> LEARN  <Text color={palette.waveA}>[R]</Text> RESET  <Text color={palette.waveA}>[Q]</Text> QUIT</Text>;
+}
+
 function Theory({ compact }: { compact: boolean }) {
-  return <Panel title="LEARN · SEE THE WAVE, UNDERSTAND THE MATH" width={80} height={compact ? 19 : 22}>
+  return <Box flexGrow={1} flexDirection="column" justifyContent="center" paddingX={2}>
+    <Text color={palette.waveA} bold>LEARN · SEE THE WAVE, UNDERSTAND THE MATH</Text>
+    {!compact && <Gap/>}
     <Text color={palette.waveA} bold>FUNDAMENTAL RELATION</Text>
     <Text color={palette.primary}>v = λf</Text>
     <Text color={palette.muted}>wave speed = wavelength × frequency</Text>
@@ -226,27 +281,12 @@ function Theory({ compact }: { compact: boolean }) {
     <Text color={palette.success}>Nothing in this display is pre-drawn: every frame comes from the equations above.</Text>
     <Gap/>
     <Text color={palette.muted}>[H / ESC] RETURN TO LAB</Text>
-  </Panel>;
-}
-
-function Header({ paused, compact }: { paused: boolean; compact: boolean }) {
-  return <Box flexDirection="column" alignItems="center">
-    <Text><Text color={palette.waveA} bold>λAMB</Text><Text color={palette.waveB} bold>Do</Text><Text color={palette.muted}>  ·  interactive wave laboratory</Text></Text>
-    {!compact && <Text color={palette.muted}>TRAVEL / INTERFERE / UNDERSTAND  ·  <Text color={paused ? palette.result : palette.success}>{paused ? "TIME FROZEN" : "LIVE EQUATIONS"}</Text></Text>}
   </Box>;
 }
 
 function FullScreen({ children }: { children: ReactNode }) {
   const { stdout } = useStdout();
-  return <Box width={stdout?.columns || 80} height={Math.max(23, (stdout?.rows || 30) - 1)} flexDirection="column" alignItems="center" justifyContent="center">{children}</Box>;
-}
-
-function Panel({ title, width, height, children }: { title: string; width: number; height: number; children: ReactNode }) {
-  const tail = Math.max(0, width - title.length - 6);
-  return <Box flexDirection="column" width={width} height={height}>
-    <Text><Text color={palette.border}>╭─ </Text><Text color={palette.waveA} bold>{title}</Text><Text color={palette.border}> {"─".repeat(tail)}╮</Text></Text>
-    <Box width={width} height={height - 1} borderStyle="round" borderTop={false} borderColor={palette.border} paddingX={1} flexDirection="column">{children}</Box>
-  </Box>;
+  return <Box width={stdout?.columns || 80} height={Math.max(23, (stdout?.rows || 30) - 1)}>{children}</Box>;
 }
 
 function Gap({ lines = 1 }: { lines?: number }) {
