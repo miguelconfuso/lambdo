@@ -5,7 +5,7 @@
 </div>
 
 <p align="center">
-  <img src="./docs/assets/lambdo-wave-line.svg" width="720" alt="An animated wave drawn with terminal characters" />
+  <img src="./docs/assets/lambdo-wave-cycle.svg" width="720" alt="A character wave that draws and erases itself" />
 </p>
 
 Lambdo began with a page from my physics notebook. I was studying wavelength, frequency and interference, and I wanted to see the symbols move instead of memorising an equation without an image.
