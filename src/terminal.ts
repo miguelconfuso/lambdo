@@ -89,6 +89,10 @@ export const LAMBDO_ART = [
 
 export const LAMBDO_ASCII = LAMBDO_ART.join("\n");
 
+const LAMBDO_ART_INDENT = Math.min(...LAMBDO_ART.map(line => line.length - line.trimStart().length));
+const LAMBDO_SIDEBAR_ART = LAMBDO_ART.map(line => line.slice(LAMBDO_ART_INDENT).trimEnd());
+const LAMBDO_SIDEBAR_ART_WIDTH = Math.max(...LAMBDO_SIDEBAR_ART.map(line => Array.from(line).length));
+
 export async function runTerminal({
   initialMode = "travelling",
   initialAmplitude = 1,
@@ -262,11 +266,17 @@ function drawSidebar(grid: Cell[][], state: TerminalState, rows: number): void {
   put(grid, rows - 1, 0, "└", "border");
   put(grid, rows - 1, right, "┘", "border");
 
-  LAMBDO_ART.forEach((line, index) => writeText(grid, index + 1, 2, line, "waveA", right - 2));
-  writeText(grid, 12, 2, "MODE", "muted");
-  writeText(grid, 12, 8, "1 WAVE", state.mode === "travelling" ? "waveA" : "primary");
-  writeText(grid, 12, 16, "2 MIX", state.mode === "interference" ? "waveB" : "primary");
-  writeText(grid, 13, 2, "PARAMETERS  ↑↓", "muted");
+  const artColumn = 1 + Math.floor(((right - 1) - LAMBDO_SIDEBAR_ART_WIDTH) / 2);
+  LAMBDO_SIDEBAR_ART.forEach((line, index) => writeText(grid, index + 1, artColumn, line, "waveA", right - artColumn));
+
+  put(grid, 12, 0, "├", "border");
+  put(grid, 12, right, "┤", "border");
+  for (let column = 1; column < right; column += 1) put(grid, 12, column, "─", "border");
+
+  writeText(grid, 13, 2, "MODE", "muted");
+  writeText(grid, 13, 8, "1 WAVE", state.mode === "travelling" ? "waveA" : "primary");
+  writeText(grid, 13, 16, "2 MIX", state.mode === "interference" ? "waveB" : "primary");
+  writeText(grid, 14, 2, "PARAMETERS  ↑↓", "muted");
 
   const parameters = activeParameters(state.mode);
   const values: Record<Parameter, [string, string]> = {
@@ -280,12 +290,12 @@ function drawSidebar(grid: Cell[][], state: TerminalState, rows: number): void {
   parameters.forEach((parameter, index) => {
     const [label, value] = values[parameter];
     const active = index === state.selected;
-    writeText(grid, 14 + index, 2, `${active ? ">" : " "} ${label.padEnd(5)}${value.padStart(10)}`, active ? "waveA" : "primary", right - 2);
+    writeText(grid, 15 + index, 2, `${active ? ">" : " "} ${label.padEnd(5)}${value.padStart(10)}`, active ? "waveA" : "primary", right - 2);
   });
 
   const frozen = state.paused || state.screen === "learn";
-  writeText(grid, rows - 4, 2, `${frozen ? "Ⅱ PAUSED" : "▶ LIVE"}  t ${state.time.toFixed(2)}s`, frozen ? "result" : "success", right - 2);
-  writeText(grid, rows - 3, 2, " ←  →  CHANGE ", "button", right - 2);
+  writeText(grid, rows - 3, 2, `${frozen ? "Ⅱ PAUSED" : "▶ LIVE"}  t ${state.time.toFixed(2)}s`, frozen ? "result" : "success", right - 2);
+  writeText(grid, rows - 2, 2, " ←  →  CHANGE ", "button", right - 2);
 }
 
 function drawHeader(grid: Cell[][], state: TerminalState, columns: number): void {
