@@ -38066,7 +38066,7 @@ function equationFor(wave) {
 
 // src/rendering/wave.ts
 var EMPTY = { glyph: " ", kind: "empty", magnitude: 0 };
-var TRACE_GLYPHS = ["\u2588", "\u2593", "\u2592", "A", "0", "=", "+", "\u25AA", "\u25CF", "\u2591"];
+var TRACE_GLYPHS = ["\u2588", "\u2593", "\u2592", "\u25AA", "\u25CF", "\u2593", "\u2592", "A", "0", "+", "="];
 function makeCell(glyph, kind, magnitude = 0) {
   return { glyph, kind, magnitude };
 }
@@ -38092,15 +38092,23 @@ function renderTrace({ width, height, span, amplitudeScale, sample, glow = true 
   for (let column = 0; column < width; column += 1) {
     const row = rows[column];
     const magnitude = magnitudes[column];
+    const previousRow = rows[column - 1];
+    if (previousRow !== void 0 && Math.abs(previousRow - row) > 1) {
+      const firstBridgeRow = Math.min(previousRow, row) + 1;
+      const lastBridgeRow = Math.max(previousRow, row);
+      for (let bridgeRow = firstBridgeRow; bridgeRow < lastBridgeRow; bridgeRow += 1) {
+        grid[bridgeRow][column] = makeCell("\u25AA", "trace", magnitude);
+      }
+    }
     if (glow) {
       for (const glowRow of [row - 1, row + 1]) {
         if (glowRow >= 0 && glowRow < height && grid[glowRow][column].kind === "empty") {
-          grid[glowRow][column] = makeCell(magnitude > 0.72 ? "\u2591" : "\xB7", "glow", magnitude);
+          grid[glowRow][column] = makeCell(magnitude > 0.3 ? "\u2591" : "\xB7", "glow", magnitude);
         }
       }
     }
-    const glyphIndex = (column * 7 + Math.round(magnitude * 10)) % TRACE_GLYPHS.length;
-    const glyph = magnitude > 0.94 ? "\u2588" : magnitude > 0.78 ? "\u2593" : TRACE_GLYPHS[glyphIndex];
+    const glyphIndex = column * 7 % TRACE_GLYPHS.length;
+    const glyph = magnitude > 0.9 ? "\u2588" : magnitude > 0.62 ? "\u2593" : TRACE_GLYPHS[glyphIndex];
     grid[row][column] = makeCell(glyph, "trace", magnitude);
   }
   return grid;
@@ -38117,11 +38125,8 @@ var palette = {
   border: "#3f3f46",
   surface: "#18181b",
   waveA: "#fb7185",
-  waveAGlow: "#7f1d1d",
   waveB: "#67e8f9",
-  waveBGlow: "#164e63",
   result: "#fbbf24",
-  resultGlow: "#713f12",
   success: "#a3e635",
   button: "#09090b"
 };
@@ -38129,7 +38134,21 @@ var MODE_LABELS = {
   travelling: "TRAVELLING WAVE",
   interference: "INTERFERENCE"
 };
-var FRAME_INTERVAL_MS = 100;
+var MIN_ANIMATION_FPS = 4;
+var MAX_ANIMATION_FPS = 10;
+var LAMBDO_ASCII = [
+  "       \u221A\u2260\u03C0",
+  "      \xF7=\u2260+=",
+  "      \u221E   \xD7\u221E",
+  "          \u03C0-",
+  "          \u2260+\u03C0",
+  "         \u221A++\xF7",
+  "        \u221A++\u03C0\xD7",
+  "        ++\u03C0 \u2248=",
+  "       ++\u221E   -    \u03C0",
+  "      -+\u2260    \u221E+\u2260\u221E\xD7",
+  "     \u221E\u2248\u221E       \u2260="
+].join("\n");
 function App2({
   initialMode = "travelling",
   initialAmplitude = 1,
@@ -38159,6 +38178,8 @@ function App2({
   const plotHeight = Math.max(12, rows - (compact ? 9 : 10));
   const parameters = mode === "interference" ? ["amplitude", "wavelength", "frequency", "phase", "phaseB", "rate"] : ["amplitude", "wavelength", "frequency", "phase", "rate"];
   const selectedParameter = parameters[Math.min(selected, parameters.length - 1)];
+  const animationFps = clamp(Math.ceil(4 + frequency * rate * 6), MIN_ANIMATION_FPS, MAX_ANIMATION_FPS);
+  const frameInterval = 1e3 / animationFps;
   (0, import_react34.useEffect)(() => {
     if (paused || tooSmall) return;
     let previousFrame = performance.now();
@@ -38167,15 +38188,16 @@ function App2({
       const elapsedSeconds = (currentFrame - previousFrame) / 1e3;
       previousFrame = currentFrame;
       setTime((value) => (value + elapsedSeconds * rate) % 1e4);
-    }, FRAME_INTERVAL_MS);
+    }, frameInterval);
     return () => clearInterval(timer);
-  }, [paused, rate, tooSmall]);
+  }, [frameInterval, paused, rate, tooSmall]);
   const waveA = (0, import_react34.useMemo)(() => ({ amplitude, wavelength, frequency, phase, direction: 1 }), [amplitude, frequency, phase, wavelength]);
   const waveB = (0, import_react34.useMemo)(() => ({ amplitude, wavelength, frequency, phase: phaseB, direction: 1 }), [amplitude, frequency, phaseB, wavelength]);
   const derived = deriveWave(waveA);
   const phaseDelta = shortestPhaseDifference(phase, phaseB);
   const resultAmplitude = resultantAmplitude(amplitude, amplitude, phaseDelta);
   const interference = classifyInterference(amplitude, amplitude, phaseDelta);
+  const displayTime = Math.floor(time * 4) / 4;
   const reset = () => {
     setAmplitude(1);
     setWavelength(8);
@@ -38248,12 +38270,12 @@ function App2({
         phase,
         phaseB,
         rate,
-        time,
+        time: displayTime,
         paused
       }
     ),
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { width: canvasWidth, height: rows - 1, paddingX: 1, flexDirection: "column", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CanvasHeader, { mode, paused, time, compact }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CanvasHeader, { mode, paused, time: displayTime, compact }),
       screen === "lab" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { height: plotHeight, flexDirection: "column", justifyContent: "center", children: mode === "travelling" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TravellingView, { wave: waveA, time, width: plotWidth, height: plotHeight }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InterferenceView, { waveA, waveB, time, resultAmplitude, kind: interference, width: plotWidth, height: plotHeight }) }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.border, children: "\xB7".repeat(plotWidth) }),
@@ -38282,7 +38304,8 @@ function App2({
 }
 function TravellingView({ wave, time, width, height }) {
   const traceHeight = Math.max(8, height - 1);
-  const trace = renderTrace({ width, height: traceHeight, span: 20, amplitudeScale: Math.max(0.1, wave.amplitude), sample: (x) => displacementAt(x, time, wave) });
+  const sample = waveSampleAtTime(wave, time);
+  const trace = renderTrace({ width, height: traceHeight, span: 20, amplitudeScale: Math.max(0.1, wave.amplitude), sample });
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(WavePlot, { trace, traceColor: palette.waveA }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.muted, children: [
@@ -38296,9 +38319,11 @@ function InterferenceView({ waveA, waveB, time, resultAmplitude, kind, width, he
   const traceHeight = Math.max(3, Math.floor((height - 3) / 3));
   const resultHeight = Math.max(3, height - 3 - traceHeight * 2);
   const common = { width, span: 20 };
-  const traceA = renderTrace({ ...common, height: traceHeight, amplitudeScale: waveA.amplitude, sample: (x) => displacementAt(x, time, waveA), glow: false });
-  const traceB = renderTrace({ ...common, height: traceHeight, amplitudeScale: waveB.amplitude, sample: (x) => displacementAt(x, time, waveB), glow: false });
-  const traceResult = renderTrace({ ...common, height: resultHeight, amplitudeScale: Math.max(0.1, waveA.amplitude + waveB.amplitude), sample: (x) => superpositionAt(x, time, [waveA, waveB]) });
+  const sampleA = waveSampleAtTime(waveA, time);
+  const sampleB = waveSampleAtTime(waveB, time);
+  const traceA = renderTrace({ ...common, height: traceHeight, amplitudeScale: waveA.amplitude, sample: sampleA, glow: false });
+  const traceB = renderTrace({ ...common, height: traceHeight, amplitudeScale: waveB.amplitude, sample: sampleB, glow: false });
+  const traceResult = renderTrace({ ...common, height: resultHeight, amplitudeScale: Math.max(0.1, waveA.amplitude + waveB.amplitude), sample: (x) => sampleA(x) + sampleB(x) });
   const color = kind === "constructive" ? palette.success : kind === "destructive" ? palette.waveA : palette.result;
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, bold: true, children: "WAVE A" }),
@@ -38318,7 +38343,7 @@ function InterferenceView({ waveA, waveB, time, resultAmplitude, kind, width, he
   ] });
 }
 function WavePlot({ trace, traceColor }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: traceColor, children: traceToText(trace) });
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: traceColor, bold: true, children: traceToText(trace) });
 }
 function ParameterRow({ active, label, value }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: active ? palette.waveA : palette.primary, backgroundColor: active ? palette.surface : void 0, bold: active, children: [
@@ -38328,18 +38353,15 @@ function ParameterRow({ active, label, value }) {
     value.padStart(10)
   ] });
 }
-function Sidebar({ width, mode, selected, amplitude, wavelength, frequency, phase, phaseB, rate, time, paused }) {
+var Sidebar = (0, import_react34.memo)(function Sidebar2({ width, mode, selected, amplitude, wavelength, frequency, phase, phaseB, rate, time, paused }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { width, height: "100%", borderStyle: "single", borderColor: palette.border, paddingX: 1, flexDirection: "column", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, bold: true, children: "\u03BBAMB" }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveB, bold: true, children: "Do" })
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, bold: true, children: LAMBDO_ASCII }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.muted, children: [
+      "MODE  ",
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: mode === "travelling" ? palette.waveA : palette.primary, bold: mode === "travelling", children: "1 WAVE" }),
+      "  ",
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: mode === "interference" ? palette.waveB : palette.primary, bold: mode === "interference", children: "2 MIX" })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: "WAVE CONTROL" }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Gap, {}),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: "MODE" }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: mode === "travelling" ? palette.waveA : palette.primary, bold: mode === "travelling", children: "1  travelling" }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: mode === "interference" ? palette.waveB : palette.primary, bold: mode === "interference", children: "2  interference" }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Gap, {}),
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.muted, children: [
       "PARAMETERS  ",
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.border, children: "\u2191\u2193" })
@@ -38351,19 +38373,21 @@ function Sidebar({ width, mode, selected, amplitude, wavelength, frequency, phas
     mode === "interference" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ParameterRow, { active: selected === "phaseB", label: "\u03C6B", value: `${phaseB.toFixed(2)} rad` }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ParameterRow, { active: selected === "rate", label: "time", value: `${rate.toFixed(2)}\xD7` }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { flexGrow: 1 }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: "STATE" }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: paused ? palette.result : palette.success, bold: true, children: paused ? "\u2161 PAUSED" : "\u25B6 PROPAGATING" }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.primary, children: [
-      "t = ",
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.result, children: [
-        time.toFixed(2),
-        " s"
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: paused ? palette.result : palette.success, bold: true, children: [
+      paused ? "\u2161 PAUSED" : "\u25B6 LIVE",
+      "  ",
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.primary, children: [
+        "t ",
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.result, children: [
+          time.toFixed(2),
+          "s"
+        ] })
       ] })
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { backgroundColor: palette.waveA, color: palette.button, bold: true, children: " \u2190  \u2192  CHANGE " })
   ] });
-}
-function CanvasHeader({ mode, paused, time, compact }) {
+});
+var CanvasHeader = (0, import_react34.memo)(function CanvasHeader2({ mode, paused, time, compact }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "column", children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { justifyContent: "space-between", children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: mode === "travelling" ? palette.waveA : palette.waveB, bold: true, children: MODE_LABELS[mode] }),
@@ -38371,7 +38395,7 @@ function CanvasHeader({ mode, paused, time, compact }) {
     ] }),
     !compact && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.muted, children: "CHARACTER WAVEFIELD  \xB7  0\u201420 METRES" })
   ] });
-}
+});
 function CanvasShortcuts({ compact }) {
   return compact ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: palette.muted, children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: palette.waveA, children: "[\u2190\u2192]" }),
@@ -38436,6 +38460,11 @@ function round(value) {
 function wrapPhase(value) {
   return Math.round((value % TAU + TAU) % TAU * 100) / 100;
 }
+function waveSampleAtTime(wave, time) {
+  const { waveNumber, angularFrequency } = deriveWave(wave);
+  const phaseOffset = -wave.direction * angularFrequency * time + wave.phase;
+  return (position) => wave.amplitude * Math.sin(waveNumber * position + phaseOffset);
+}
 
 // src/cli.tsx
 var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
@@ -38443,6 +38472,8 @@ var args = process.argv.slice(2);
 var VERSION = package_default.version;
 if (args.includes("--help") || args.includes("-h")) {
   console.log(`
+${LAMBDO_ASCII}
+
   lambdo \u2014 see the wave, understand the math
 
   Usage
@@ -38490,7 +38521,8 @@ try {
   }
   const app = render_default(/* @__PURE__ */ (0, import_jsx_runtime2.jsx)(App2, { initialMode: mode, initialAmplitude: amplitude, initialWavelength: wavelength, initialFrequency: frequency }), {
     alternateScreen: true,
-    maxFps: 30
+    incrementalRendering: true,
+    maxFps: 10
   });
   process.stdout.write("\x1B[?25l");
   try {
@@ -38510,7 +38542,9 @@ function printSnapshot(mode, amplitude, wavelength, frequency) {
   const trace = renderTrace({ width: 60, height: 13, span: 20, amplitudeScale: scale, sample });
   const derived = deriveWave(waveA);
   console.log(`
-\u03BBAMBDo \xB7 ${mode.toUpperCase()} \xB7 t = 0.00s
+${LAMBDO_ASCII}
+
+${mode.toUpperCase()} \xB7 t = 0.00s
 `);
   console.log(traceToText(trace));
   console.log(`

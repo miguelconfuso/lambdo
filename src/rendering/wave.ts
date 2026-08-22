@@ -16,7 +16,7 @@ export interface TraceOptions {
 }
 
 const EMPTY: WaveCell = { glyph: " ", kind: "empty", magnitude: 0 };
-const TRACE_GLYPHS = ["█", "▓", "▒", "A", "0", "=", "+", "▪", "●", "░"] as const;
+const TRACE_GLYPHS = ["█", "▓", "▒", "▪", "●", "▓", "▒", "A", "0", "+", "="] as const;
 
 function makeCell(glyph: string, kind: CellKind, magnitude = 0): WaveCell {
   return { glyph, kind, magnitude };
@@ -47,15 +47,23 @@ export function renderTrace({ width, height, span, amplitudeScale, sample, glow 
   for (let column = 0; column < width; column += 1) {
     const row = rows[column]!;
     const magnitude = magnitudes[column]!;
+    const previousRow = rows[column - 1];
+    if (previousRow !== undefined && Math.abs(previousRow - row) > 1) {
+      const firstBridgeRow = Math.min(previousRow, row) + 1;
+      const lastBridgeRow = Math.max(previousRow, row);
+      for (let bridgeRow = firstBridgeRow; bridgeRow < lastBridgeRow; bridgeRow += 1) {
+        grid[bridgeRow]![column] = makeCell("▪", "trace", magnitude);
+      }
+    }
     if (glow) {
       for (const glowRow of [row - 1, row + 1]) {
         if (glowRow >= 0 && glowRow < height && grid[glowRow]![column]!.kind === "empty") {
-          grid[glowRow]![column] = makeCell(magnitude > 0.72 ? "░" : "·", "glow", magnitude);
+          grid[glowRow]![column] = makeCell(magnitude > 0.3 ? "░" : "·", "glow", magnitude);
         }
       }
     }
-    const glyphIndex = (column * 7 + Math.round(magnitude * 10)) % TRACE_GLYPHS.length;
-    const glyph = magnitude > 0.94 ? "█" : magnitude > 0.78 ? "▓" : TRACE_GLYPHS[glyphIndex]!;
+    const glyphIndex = (column * 7) % TRACE_GLYPHS.length;
+    const glyph = magnitude > 0.9 ? "█" : magnitude > 0.62 ? "▓" : TRACE_GLYPHS[glyphIndex]!;
     grid[row]![column] = makeCell(glyph, "trace", magnitude);
   }
   return grid;

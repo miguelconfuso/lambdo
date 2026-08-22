@@ -1,6 +1,6 @@
 import { render } from "ink";
 import packageJson from "../package.json" with { type: "json" };
-import { App, type LabMode } from "./app.js";
+import { App, LAMBDO_ASCII, type LabMode } from "./app.js";
 import { deriveWave, displacementAt, superpositionAt, type WaveParameters } from "./physics/wave.js";
 import { renderTrace, traceToText } from "./rendering/wave.js";
 
@@ -9,6 +9,8 @@ const VERSION = packageJson.version;
 
 if (args.includes("--help") || args.includes("-h")) {
   console.log(`
+${LAMBDO_ASCII}
+
   lambdo — see the wave, understand the math
 
   Usage
@@ -62,7 +64,8 @@ try {
 
   const app = render(<App initialMode={mode} initialAmplitude={amplitude} initialWavelength={wavelength} initialFrequency={frequency}/>, {
     alternateScreen: true,
-    maxFps: 30,
+    incrementalRendering: true,
+    maxFps: 10,
   });
   process.stdout.write("\x1b[?25l");
   try {
@@ -84,7 +87,7 @@ function printSnapshot(mode: LabMode, amplitude: number, wavelength: number, fre
   const scale = mode === "travelling" ? amplitude : amplitude * 2;
   const trace = renderTrace({ width: 60, height: 13, span: 20, amplitudeScale: scale, sample });
   const derived = deriveWave(waveA);
-  console.log(`\nλAMBDo · ${mode.toUpperCase()} · t = 0.00s\n`);
+  console.log(`\n${LAMBDO_ASCII}\n\n${mode.toUpperCase()} · t = 0.00s\n`);
   console.log(traceToText(trace));
   console.log(`\nA ${amplitude.toFixed(2)}  λ ${wavelength.toFixed(2)}m  f ${frequency.toFixed(2)}Hz  v ${derived.speed.toFixed(2)}m/s`);
   console.log(`k ${derived.waveNumber.toFixed(2)}rad/m  ω ${derived.angularFrequency.toFixed(2)}rad/s  T ${derived.period.toFixed(2)}s\n`);

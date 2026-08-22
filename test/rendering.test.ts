@@ -24,6 +24,20 @@ test("waveform uses terminal glyphs and glow instead of a prebuilt image", () =>
   assert.doesNotMatch(text, /[╱╲/\\|]/u);
 });
 
+test("steep sections are joined with solid point glyphs", () => {
+  const trace = renderTrace({
+    width: 8,
+    height: 9,
+    span: 7,
+    amplitudeScale: 1,
+    sample: x => Math.round(x) % 2 === 0 ? -1 : 1,
+    glow: false,
+  });
+  const bridgedColumn = trace.map(row => row[1]!).filter(cell => cell.kind === "trace");
+  assert.ok(bridgedColumn.length > 2);
+  assert.ok(bridgedColumn.some(cell => cell.glyph === "▪"));
+});
+
 test("renderer rejects dimensions that cannot represent a wave", () => {
   assert.throws(() => renderTrace({ width: 1, height: 7, span: 10, amplitudeScale: 1, sample: () => 0 }), /width/);
   assert.throws(() => renderTrace({ width: 10, height: 2, span: 10, amplitudeScale: 1, sample: () => 0 }), /height/);
