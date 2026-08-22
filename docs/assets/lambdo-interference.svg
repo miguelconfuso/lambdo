@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title description">
+  <title id="title">Lambdo interference laboratory</title>
+  <desc id="description">Terminal preview with wave controls, two waves and their partially constructive result.</desc>
+  <rect width="1200" height="680" rx="24" fill="#090b0f"/>
+  <rect x="1" y="1" width="1198" height="678" rx="23" fill="none" stroke="#303640" stroke-width="2"/>
+  <circle cx="30" cy="28" r="7" fill="#f05c58"/>
+  <circle cx="54" cy="28" r="7" fill="#e5bf55"/>
+  <circle cx="78" cy="28" r="7" fill="#63c985"/>
+  <text x="600" y="34" fill="#747d8c" text-anchor="middle" font-family="Consolas, monospace" font-size="18">lambdo — interference laboratory</text>
+  <line x1="0" y1="52" x2="1200" y2="52" stroke="#303640" stroke-width="2"/>
+  <line x1="270" y1="52" x2="270" y2="680" stroke="#303640" stroke-width="2"/>
+
+  <g font-family="Consolas, monospace">
+    <text x="135" y="92" fill="#f05c58" text-anchor="middle" font-size="24" font-weight="700">√≠π</text>
+    <text x="135" y="120" fill="#f05c58" text-anchor="middle" font-size="24" font-weight="700">÷=≠+=</text>
+    <text x="135" y="148" fill="#f05c58" text-anchor="middle" font-size="24" font-weight="700">∞   ×∞</text>
+    <text x="135" y="176" fill="#f05c58" text-anchor="middle" font-size="24" font-weight="700">π−</text>
+    <text x="135" y="204" fill="#f05c58" text-anchor="middle" font-size="24" font-weight="700">≠+π</text>
+    <text x="135" y="232" fill="#f05c58" text-anchor="middle" font-size="24" font-weight="700">√++÷</text>
+    <text x="135" y="260" fill="#f05c58" text-anchor="middle" font-size="24" font-weight="700">√++π×</text>
+    <line x1="0" y1="286" x2="270" y2="286" stroke="#303640" stroke-width="2"/>
+
+    <text x="24" y="322" fill="#747d8c" font-size="17">MODE</text>
+    <text x="92" y="322" fill="#f5f7fa" font-size="17">1 WAVE</text>
+    <text x="180" y="322" fill="#5dd7e5" font-size="17" font-weight="700">2 MIX</text>
+    <text x="24" y="358" fill="#747d8c" font-size="17">PARAMETERS  ↑↓</text>
+    <text x="24" y="394" fill="#f05c58" font-size="18" font-weight="700">&gt; A</text><text x="238" y="394" fill="#f05c58" text-anchor="end" font-size="18">1.00</text>
+    <text x="24" y="426" fill="#f5f7fa" font-size="18">  λ</text><text x="238" y="426" fill="#f5f7fa" text-anchor="end" font-size="18">8.00 m</text>
+    <text x="24" y="458" fill="#f5f7fa" font-size="18">  f</text><text x="238" y="458" fill="#f5f7fa" text-anchor="end" font-size="18">1.00 Hz</text>
+    <text x="24" y="490" fill="#f5f7fa" font-size="18">  φA</text><text x="238" y="490" fill="#f5f7fa" text-anchor="end" font-size="18">0.00 rad</text>
+    <text x="24" y="522" fill="#f5f7fa" font-size="18">  φB</text><text x="238" y="522" fill="#f5f7fa" text-anchor="end" font-size="18">1.57 rad</text>
+    <text x="24" y="554" fill="#f5f7fa" font-size="18">  time</text><text x="238" y="554" fill="#f5f7fa" text-anchor="end" font-size="18">1.00×</text>
+    <text x="24" y="620" fill="#63c985" font-size="18" font-weight="700">▶ LIVE  t 2.41s</text>
+    <rect x="20" y="638" width="174" height="28" rx="3" fill="#f05c58"/>
+    <text x="107" y="658" fill="#090b0f" text-anchor="middle" font-size="16" font-weight="700">←  →  CHANGE</text>
+
+    <text x="302" y="88" fill="#5dd7e5" font-size="23" font-weight="700">INTERFERENCE</text>
+    <text x="1168" y="88" fill="#63c985" text-anchor="end" font-size="18" font-weight="700">LIVE  t=2.41s</text>
+    <text x="302" y="124" fill="#f05c58" font-size="17">y₁(x,t) = 1.00 sin(0.79x − 6.28t + 0.00)</text>
+    <text x="302" y="272" fill="#5dd7e5" font-size="17">y₂(x,t) = 1.00 sin(0.79x − 6.28t + 1.57)</text>
+
+    <path d="M302 196 C350 126 398 126 446 196 S542 266 590 196 S686 126 734 196 S830 266 878 196 S974 126 1022 196 S1118 266 1166 196" fill="none" stroke="#f05c58" stroke-width="5" stroke-linecap="round"/>
+    <line x1="302" y1="196" x2="1166" y2="196" stroke="#303640" stroke-width="1" stroke-dasharray="3 8"/>
+    <path d="M302 344 C350 414 398 414 446 344 S542 274 590 344 S686 414 734 344 S830 274 878 344 S974 414 1022 344 S1118 274 1166 344" fill="none" stroke="#5dd7e5" stroke-width="5" stroke-linecap="round"/>
+    <line x1="302" y1="344" x2="1166" y2="344" stroke="#303640" stroke-width="1" stroke-dasharray="3 8"/>
+
+    <text x="302" y="442" fill="#e5bf55" font-size="19" font-weight="700">RESULT A=1.41  ███████░░░  PARTIAL</text>
+    <path d="M302 518 C350 418 398 448 446 548 S542 618 590 518 S686 418 734 518 S830 618 878 518 S974 418 1022 518 S1118 618 1166 518" fill="none" stroke="#e5bf55" stroke-width="6" stroke-linecap="round"/>
+    <line x1="302" y1="518" x2="1166" y2="518" stroke="#303640" stroke-width="1" stroke-dasharray="3 8"/>
+    <line x1="302" y1="606" x2="1166" y2="606" stroke="#303640" stroke-width="2" stroke-dasharray="2 7"/>
+    <text x="302" y="638" fill="#e5bf55" font-size="18" font-weight="700">INTERFERENCE: PARTIAL · QUARTER CYCLE</text>
+    <text x="302" y="664" fill="#f5f7fa" font-size="16">φA ●────────  φB ──●──────  Δφ 1.57 rad</text>
+  </g>
+</svg>
