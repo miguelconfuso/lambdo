@@ -4,11 +4,6 @@ All notable changes to Lambdo are documented here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
-### Added
-
-- Reproducible interference comparison in text and JSON formats.
-- Repository preview, bilingual project presentation and contributor documentation.
-
 ## [0.1.0] - 2026-08-22
 
 ### Added
@@ -20,8 +15,10 @@ All notable changes to Lambdo are documented here. The format follows [Keep a Ch
 - Phase rails, intensity indicator and contextual Learn mode.
 - Live equation and derived-quantity inspectors.
 - Deterministic snapshot mode.
+- Reproducible interference comparison in text and JSON formats.
 - Mathematical and renderer invariant tests.
 - Continuous integration for tests, type checking and production builds.
+- Repository preview, bilingual project presentation and contributor documentation.
 
 ### Changed
 
