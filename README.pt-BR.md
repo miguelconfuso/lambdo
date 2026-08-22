@@ -5,7 +5,7 @@
 </div>
 
 <p align="center">
-  <img src="./docs/assets/lambdo-wave-cycle.svg" width="720" alt="Uma onda de caracteres que se desenha e depois se desfaz" />
+  <img src="./docs/assets/lambdo-wave-render.svg" width="720" alt="Uma onda de caracteres retos que se desenha e depois se desfaz" />
 </p>
 
 O Lambdo nasceu de uma anotação da minha apostila de física. Eu tinha escrito `v = λf` ao lado de alguns desenhos de onda e fiquei pensando em como seria mudar cada valor e ver o desenho responder na hora.

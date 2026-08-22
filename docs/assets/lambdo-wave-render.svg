@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="140" viewBox="0 0 720 140" role="img" aria-labelledby="title description">
+  <title id="title">Lambdo terminal wave render</title>
+  <desc id="description">A wave built with the same upright grid cells and glyph selection used by the Lambdo renderer. It draws once, pauses, then erases itself.</desc>
+
+  <defs>
+    <clipPath id="reveal-wave">
+      <rect x="8" y="4" width="0" height="132">
+        <animate attributeName="width" values="0;704;704;0;0" keyTimes="0;0.42;0.62;0.95;1" dur="4s" repeatCount="indefinite" />
+      </rect>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#reveal-wave)" fill="#f05c58" font-family="Consolas, 'Liberation Mono', monospace" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+    <text x="20" y="70">█</text>
+    <text x="30" y="59">A</text>
+    <text x="40" y="48">▪</text>
+    <text x="50" y="37">▓</text>
+    <text x="60" y="26">█</text>
+    <text x="70" y="26">█</text>
+    <text x="80" y="26">█</text>
+    <text x="90" y="26">█</text>
+    <text x="100" y="37">▓</text>
+    <text x="110" y="48">0</text>
+    <text x="120" y="59">●</text>
+    <text x="130" y="70">█</text>
+    <text x="140" y="81">A</text>
+    <text x="150" y="92">▪</text>
+    <text x="160" y="103">▓</text>
+    <text x="170" y="114">▓</text>
+    <text x="180" y="114">█</text>
+    <text x="190" y="114">█</text>
+    <text x="200" y="114">█</text>
+    <text x="210" y="103">▓</text>
+    <text x="220" y="92">0</text>
+    <text x="230" y="81">●</text>
+    <text x="240" y="70">█</text>
+    <text x="250" y="59">A</text>
+    <text x="260" y="48">▪</text>
+    <text x="270" y="37">▓</text>
+    <text x="280" y="37">▓</text>
+    <text x="290" y="26">█</text>
+    <text x="300" y="26">█</text>
+    <text x="310" y="26">█</text>
+    <text x="320" y="37">▓</text>
+    <text x="330" y="37">▓</text>
+    <text x="340" y="48">●</text>
+    <text x="350" y="59">█</text>
+    <text x="360" y="70">▪</text>
+    <text x="360" y="81">A</text>
+    <text x="370" y="92">▪</text>
+    <text x="380" y="103">▓</text>
+    <text x="390" y="103">▓</text>
+    <text x="400" y="114">█</text>
+    <text x="410" y="114">█</text>
+    <text x="420" y="114">█</text>
+    <text x="430" y="103">▓</text>
+    <text x="440" y="103">▓</text>
+    <text x="450" y="92">●</text>
+    <text x="460" y="81">█</text>
+    <text x="470" y="70">A</text>
+    <text x="480" y="59">▪</text>
+    <text x="490" y="48">=</text>
+    <text x="500" y="37">▓</text>
+    <text x="510" y="26">█</text>
+    <text x="520" y="26">█</text>
+    <text x="530" y="26">█</text>
+    <text x="540" y="26">▓</text>
+    <text x="550" y="37">▓</text>
+    <text x="560" y="48">●</text>
+    <text x="570" y="59">█</text>
+    <text x="580" y="70">A</text>
+    <text x="590" y="81">▪</text>
+    <text x="600" y="92">=</text>
+    <text x="610" y="103">▓</text>
+    <text x="620" y="114">█</text>
+    <text x="630" y="114">█</text>
+    <text x="640" y="114">█</text>
+    <text x="650" y="114">█</text>
+    <text x="660" y="103">▓</text>
+    <text x="670" y="92">●</text>
+    <text x="680" y="81">█</text>
+    <text x="690" y="70">A</text>
+  </g>
+</svg>
+
