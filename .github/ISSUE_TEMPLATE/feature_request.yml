@@ -1,0 +1,24 @@
+name: Feature request
+description: Propose a physical concept or laboratory improvement.
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: concept
+    attributes:
+      label: Physical concept or problem
+      description: What should Lambdo help someone see or understand?
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Proposed behavior
+      description: Describe the controls and visible result.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: How could it be verified?
+      description: Mention equations, invariants or deterministic cases when possible.
