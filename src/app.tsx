@@ -7,6 +7,7 @@ import {
   equationFor,
   resultantAmplitude,
   shortestPhaseDifference,
+  type InterferenceKind,
   type WaveParameters,
 } from "./physics/wave.js";
 import { renderTrace, traceToText, type WaveCell } from "./rendering/wave.js";
@@ -35,6 +36,14 @@ const MODE_LABELS: Record<LabMode, string> = {
 const MIN_ANIMATION_FPS = 4;
 const MAX_ANIMATION_FPS = 10;
 const MAX_OUTPUT_BUFFER_BYTES = 32 * 1_024;
+
+interface InterferencePresentation {
+  category: "CONSTRUCTIVE" | "DESTRUCTIVE" | "PARTIAL";
+  label: "CONSTRUCTIVE" | "DESTRUCTIVE" | "PARTIAL" | "CANCELLED";
+  relation: "IN PHASE" | "NEARLY IN PHASE" | "PARTLY IN PHASE" | "QUARTER CYCLE" | "PARTLY OUT OF PHASE" | "OUT OF PHASE";
+  color: string;
+  ratio: number;
+}
 export const LAMBDO_ASCII = [
   "       √≠π",
   "      ÷=≠+=",
@@ -92,7 +101,7 @@ export function App({
   const frameInterval = 1_000 / animationFps;
 
   useEffect(() => {
-    if (paused || tooSmall) return;
+    if (paused || screen === "learn" || tooSmall) return;
     let previousFrame = performance.now();
     const timer = setInterval(() => {
       const currentFrame = performance.now();
@@ -105,7 +114,7 @@ export function App({
       setTime(value => (value + elapsedSeconds * rate) % 10_000);
     }, frameInterval);
     return () => clearInterval(timer);
-  }, [frameInterval, paused, rate, stdout, tooSmall]);
+  }, [frameInterval, paused, rate, screen, stdout, tooSmall]);
 
   const waveA = useMemo<WaveParameters>(() => ({ amplitude, wavelength, frequency, phase, direction: 1 }), [amplitude, frequency, phase, wavelength]);
   const waveB = useMemo<WaveParameters>(() => ({ amplitude, wavelength, frequency, phase: phaseB, direction: 1 }), [amplitude, frequency, phaseB, wavelength]);
@@ -113,7 +122,9 @@ export function App({
   const phaseDelta = shortestPhaseDifference(phase, phaseB);
   const resultAmplitude = resultantAmplitude(amplitude, amplitude, phaseDelta);
   const interference = classifyInterference(amplitude, amplitude, phaseDelta);
+  const presentation = describeInterference(interference, phaseDelta, resultAmplitude, amplitude * 2);
   const displayTime = Math.floor(time * 4) / 4;
+  const simulationPaused = paused || screen === "learn";
 
   const reset = () => {
     setAmplitude(1);
@@ -177,21 +188,27 @@ export function App({
         phaseB={phaseB}
         rate={rate}
         time={displayTime}
-        paused={paused}
+        paused={simulationPaused}
       />
       <Box width={canvasWidth} height={rows - 1} paddingX={1} flexDirection="column">
-        <CanvasHeader mode={mode} paused={paused} time={displayTime} compact={compact}/>
+        <CanvasHeader mode={mode} paused={simulationPaused} time={displayTime} compact={compact}/>
         {screen === "lab" ? <>
           <Box height={plotHeight} flexDirection="column" justifyContent="center">
             {mode === "travelling"
               ? <TravellingView wave={waveA} time={time} width={plotWidth} height={plotHeight}/>
-              : <InterferenceView waveA={waveA} waveB={waveB} time={time} resultAmplitude={resultAmplitude} kind={interference} width={plotWidth} height={plotHeight}/>}
+              : <InterferenceView waveA={waveA} waveB={waveB} time={time} resultAmplitude={resultAmplitude} presentation={presentation} width={plotWidth} height={plotHeight}/>}
           </Box>
           <Text color={palette.border}>{"·".repeat(plotWidth)}</Text>
-          <Text color={palette.primary}>v <Text color={palette.success}>{derived.speed.toFixed(2)} m/s</Text>   k <Text color={palette.waveB}>{derived.waveNumber.toFixed(2)} rad/m</Text>   ω <Text color={palette.result}>{derived.angularFrequency.toFixed(2)} rad/s</Text></Text>
-          <Text color={palette.muted}>{mode === "travelling" ? equationFor(waveA) : `Δφ = ${phaseDelta.toFixed(2)} rad  ·  Aresult = ${resultAmplitude.toFixed(2)}`}</Text>
+          {mode === "travelling" ? <>
+            <Text color={palette.primary}>v <Text color={palette.success}>{derived.speed.toFixed(2)} m/s</Text>   k <Text color={palette.waveB}>{derived.waveNumber.toFixed(2)} rad/m</Text>   ω <Text color={palette.result}>{derived.angularFrequency.toFixed(2)} rad/s</Text></Text>
+            <Text color={palette.muted}>{equationFor(waveA)}</Text>
+          </> : <>
+            <Text color={presentation.color} bold>INTERFERENCE: {presentation.category}  ·  {presentation.relation}</Text>
+            <Text color={palette.primary}>φA <Text color={palette.waveA}>{phaseTrack(phase)}</Text>  φB <Text color={palette.waveB}>{phaseTrack(phaseB)}</Text>  Δφ <Text color={palette.result}>{phaseDelta.toFixed(2)}</Text></Text>
+            <Text color={palette.muted}>y(x,t) = y₁(x,t) + y₂(x,t)</Text>
+          </>}
           <CanvasShortcuts compact={compact}/>
-        </> : <Theory compact={compact}/>}
+        </> : <Theory compact={compact} mode={mode} waveA={waveA} waveB={waveB} phaseDelta={phaseDelta} resultAmplitude={resultAmplitude} presentation={presentation}/>}
       </Box>
     </Box>
   </FullScreen>;
@@ -207,7 +224,7 @@ function TravellingView({ wave, time, width, height }: { wave: WaveParameters; t
   </>;
 }
 
-function InterferenceView({ waveA, waveB, time, resultAmplitude, kind, width, height }: { waveA: WaveParameters; waveB: WaveParameters; time: number; resultAmplitude: number; kind: string; width: number; height: number }) {
+function InterferenceView({ waveA, waveB, time, resultAmplitude, presentation, width, height }: { waveA: WaveParameters; waveB: WaveParameters; time: number; resultAmplitude: number; presentation: InterferencePresentation; width: number; height: number }) {
   const traceHeight = Math.max(3, Math.floor((height - 3) / 3));
   const resultHeight = Math.max(3, height - 3 - traceHeight * 2);
   const common = { width, span: 20 };
@@ -216,13 +233,12 @@ function InterferenceView({ waveA, waveB, time, resultAmplitude, kind, width, he
   const traceA = renderTrace({ ...common, height: traceHeight, amplitudeScale: waveA.amplitude, sample: sampleA, glow: false });
   const traceB = renderTrace({ ...common, height: traceHeight, amplitudeScale: waveB.amplitude, sample: sampleB, glow: false });
   const traceResult = renderTrace({ ...common, height: resultHeight, amplitudeScale: Math.max(0.1, waveA.amplitude + waveB.amplitude), sample: x => sampleA(x) + sampleB(x) });
-  const color = kind === "constructive" ? palette.success : kind === "destructive" ? palette.waveA : palette.result;
   return <>
-    <Text color={palette.waveA} bold>WAVE A</Text>
+    <Text color={palette.waveA} bold>{namedEquationFor(waveA, "y₁")}</Text>
     <WavePlot trace={traceA} traceColor={palette.waveA}/>
-    <Text color={palette.waveB} bold>WAVE B</Text>
+    <Text color={palette.waveB} bold>{namedEquationFor(waveB, "y₂")}</Text>
     <WavePlot trace={traceB} traceColor={palette.waveB}/>
-    <Text><Text color={palette.result} bold>RESULT</Text><Text color={palette.muted}>  A = {resultAmplitude.toFixed(2)}  </Text><Text color={color} bold>{kind.toUpperCase()}</Text></Text>
+    <Text><Text color={palette.result} bold>RESULT</Text><Text color={palette.muted}> A={resultAmplitude.toFixed(2)} </Text><Text color={presentation.color} bold>{intensityBar(presentation.ratio)}  {presentation.label}</Text></Text>
     <WavePlot trace={traceResult} traceColor={palette.result}/>
   </>;
 }
@@ -276,27 +292,56 @@ const CanvasHeader = memo(function CanvasHeader({ mode, paused, time, compact }:
 
 function CanvasShortcuts({ compact }: { compact: boolean }) {
   return compact
-    ? <Text color={palette.muted}><Text color={palette.waveA}>[←→]</Text> CHANGE  <Text color={palette.waveA}>[SPACE]</Text> PAUSE  <Text color={palette.waveA}>[M]</Text> MODE  <Text color={palette.waveA}>[Q]</Text> QUIT</Text>
+    ? <Text color={palette.muted}><Text color={palette.waveA}>[←→]</Text> EDIT  <Text color={palette.waveA}>[SPC]</Text> PAUSE  <Text color={palette.waveA}>[M]</Text> MODE  <Text color={palette.waveA}>[H]</Text> LEARN  <Text color={palette.waveA}>[Q]</Text> QUIT</Text>
     : <Text color={palette.muted}><Text color={palette.waveA}>[↑↓]</Text> SELECT  <Text color={palette.waveA}>[←→]</Text> CHANGE  <Text color={palette.waveA}>[SPACE]</Text> PAUSE  <Text color={palette.waveA}>[M]</Text> MODE  <Text color={palette.waveA}>[H]</Text> LEARN  <Text color={palette.waveA}>[R]</Text> RESET  <Text color={palette.waveA}>[Q]</Text> QUIT</Text>;
 }
 
-function Theory({ compact }: { compact: boolean }) {
+function Theory({ compact, mode, waveA, waveB, phaseDelta, resultAmplitude, presentation }: {
+  compact: boolean;
+  mode: LabMode;
+  waveA: WaveParameters;
+  waveB: WaveParameters;
+  phaseDelta: number;
+  resultAmplitude: number;
+  presentation: InterferencePresentation;
+}) {
+  if (mode === "interference") {
+    const [explanationA, explanationB] = contextualExplanation(presentation.label);
+    return <Box flexGrow={1} flexDirection="column" justifyContent="center" paddingX={1}>
+      <Text color={palette.waveB} bold>LEARN · INTERFERENCE</Text>
+      {!compact && <Gap/>}
+      <Text color={presentation.color} bold>{presentationHeading(presentation)}</Text>
+      <Text color={palette.primary}>{explanationA}</Text>
+      <Text color={palette.muted}>{explanationB}</Text>
+      <Gap/>
+      <Text color={palette.result} bold>LIVE EQUATIONS</Text>
+      <Text color={palette.waveA}>{namedEquationFor(waveA, "y₁")}</Text>
+      <Text color={palette.waveB}>{namedEquationFor(waveB, "y₂")}</Text>
+      <Text color={palette.primary}>y(x,t) = y₁(x,t) + y₂(x,t)</Text>
+      <Gap/>
+      <Text color={palette.result} bold>PHASE MAP</Text>
+      <Text color={palette.primary}>φA <Text color={palette.waveA}>{phaseTrack(waveA.phase)}</Text>  φB <Text color={palette.waveB}>{phaseTrack(waveB.phase)}</Text></Text>
+      <Text color={palette.muted}>Δφ = <Text color={palette.result}>{phaseDelta.toFixed(2)} rad</Text>  ·  Aresult = <Text color={presentation.color}>{resultAmplitude.toFixed(2)}</Text></Text>
+      <Text color={presentation.color}>{intensityBar(presentation.ratio, 18)}  {Math.round(presentation.ratio * 100)}% of maximum</Text>
+      <Gap/>
+      <Text color={palette.muted}>[H / ESC] RETURN TO LAB</Text>
+    </Box>;
+  }
+
+  const derived = deriveWave(waveA);
   return <Box flexGrow={1} flexDirection="column" justifyContent="center" paddingX={2}>
-    <Text color={palette.waveA} bold>LEARN · SEE THE WAVE, UNDERSTAND THE MATH</Text>
+    <Text color={palette.waveA} bold>LEARN · TRAVELLING WAVE</Text>
     {!compact && <Gap/>}
+    <Text color={palette.primary}>The profile moves through space without changing shape.</Text>
+    <Text color={palette.muted}>Frequency controls oscillation rate; λ controls spacing.</Text>
+    <Gap/>
     <Text color={palette.waveA} bold>FUNDAMENTAL RELATION</Text>
-    <Text color={palette.primary}>v = λf</Text>
-    <Text color={palette.muted}>wave speed = wavelength × frequency</Text>
+    <Text color={palette.primary}>v = λf = {waveA.wavelength.toFixed(2)} × {waveA.frequency.toFixed(2)} = <Text color={palette.success}>{derived.speed.toFixed(2)} m/s</Text></Text>
+    <Text color={palette.muted}>T = {derived.period.toFixed(2)} s  ·  k = {derived.waveNumber.toFixed(2)} rad/m  ·  ω = {derived.angularFrequency.toFixed(2)} rad/s</Text>
     <Gap/>
-    <Text color={palette.waveB} bold>TRAVELLING WAVE</Text>
-    <Text color={palette.primary}>y(x,t) = A sin(kx − ωt + φ)</Text>
-    <Text color={palette.muted}>k = 2π/λ  ·  ω = 2πf  ·  T = 1/f</Text>
-    <Gap/>
-    <Text color={palette.result} bold>SUPERPOSITION</Text>
-    <Text color={palette.primary}>ytotal(x,t) = yA(x,t) + yB(x,t)</Text>
-    <Text color={palette.muted}>Δφ ≈ 0 → constructive  ·  Δφ ≈ π → destructive</Text>
-    <Gap/>
-    <Text color={palette.success}>Nothing in this display is pre-drawn: every frame comes from the equations above.</Text>
+    <Text color={palette.waveB} bold>LIVE EQUATION</Text>
+    <Text color={palette.primary}>{namedEquationFor(waveA, "y")}</Text>
+    <Text color={palette.muted}>Every displayed point is calculated from this equation.</Text>
     <Gap/>
     <Text color={palette.muted}>[H / ESC] RETURN TO LAB</Text>
   </Box>;
@@ -327,4 +372,81 @@ function waveSampleAtTime(wave: WaveParameters, time: number): (position: number
   const { waveNumber, angularFrequency } = deriveWave(wave);
   const phaseOffset = -wave.direction * angularFrequency * time + wave.phase;
   return position => wave.amplitude * Math.sin(waveNumber * position + phaseOffset);
+}
+
+function describeInterference(kind: InterferenceKind, phaseDelta: number, resultAmplitude: number, maximumAmplitude: number): InterferencePresentation {
+  const ratio = maximumAmplitude > 0 ? clamp(resultAmplitude / maximumAmplitude, 0, 1) : 0;
+  if (kind === "constructive") {
+    return {
+      category: "CONSTRUCTIVE",
+      label: "CONSTRUCTIVE",
+      relation: phaseDelta < 0.08 ? "IN PHASE" : "NEARLY IN PHASE",
+      color: palette.success,
+      ratio,
+    };
+  }
+  if (kind === "destructive") {
+    return {
+      category: "DESTRUCTIVE",
+      label: ratio < 0.01 ? "CANCELLED" : "DESTRUCTIVE",
+      relation: "OUT OF PHASE",
+      color: palette.waveA,
+      ratio,
+    };
+  }
+  return {
+    category: "PARTIAL",
+    label: "PARTIAL",
+    relation: Math.abs(phaseDelta - Math.PI / 2) < 0.12
+      ? "QUARTER CYCLE"
+      : phaseDelta < Math.PI / 2 ? "PARTLY IN PHASE" : "PARTLY OUT OF PHASE",
+    color: palette.result,
+    ratio,
+  };
+}
+
+function namedEquationFor(wave: WaveParameters, name: "y" | "y₁" | "y₂"): string {
+  return equationFor(wave).replace("y(x,t)", `${name}(x,t)`);
+}
+
+function intensityBar(ratio: number, width = 10): string {
+  const filled = Math.round(clamp(ratio, 0, 1) * width);
+  return "█".repeat(filled) + "░".repeat(width - filled);
+}
+
+function phaseTrack(phase: number, width = 9): string {
+  const normalized = ((phase % TAU) + TAU) % TAU;
+  const marker = Math.round((normalized / TAU) * (width - 1));
+  return Array.from({ length: width }, (_, index) => index === marker ? "●" : "─").join("");
+}
+
+function contextualExplanation(label: InterferencePresentation["label"]): [string, string] {
+  if (label === "CONSTRUCTIVE") {
+    return [
+      "Crests meet crests and troughs meet troughs.",
+      "The amplitudes reinforce toward their maximum.",
+    ];
+  }
+  if (label === "CANCELLED") {
+    return [
+      "Equal waves are exactly opposite: crest meets trough.",
+      "Their displacements cancel completely at every point.",
+    ];
+  }
+  if (label === "DESTRUCTIVE") {
+    return [
+      "The waves are close to opposite phase.",
+      "Most of their displacement is cancelled.",
+    ];
+  }
+  return [
+    "The waves are neither aligned nor fully opposite.",
+    "The result lies between reinforcement and cancellation.",
+  ];
+}
+
+function presentationHeading(presentation: InterferencePresentation): string {
+  return presentation.label === presentation.category
+    ? `${presentation.category} INTERFERENCE`
+    : `${presentation.label} · ${presentation.category} INTERFERENCE`;
 }
